@@ -891,6 +891,7 @@ game.import("card", function () {
 			yingbian_kongchao_tag: "空巢",
 			yingbian_fujia_tag: "富甲",
 			yingbian_canqu_tag: "残躯",
+			yingbian_gujun_tag: "孤军",
 			yingbian_force_tag: "应变",
 			_yingbian: "应变",
 			yingbian_changeTarget: "应变",
@@ -1070,7 +1071,7 @@ game.import("card", function () {
 			["diamond", 5, "muniu"],
 		],
 		help: {
-			应变篇: '<div style="margin:10px">应变机制</div><ul style="margin-top:0">' + "<li>当一名角色声明使用右下角标注了应变条件的卡牌后，若其满足应变条件，则其触发此牌的“应变”效果。<br><li>长按或鼠标右键点击卡牌，即可查看此牌所拥有的应变效果。" + '<br><li>应变条件<br><ul style="padding-left:20px;padding-top:5px"><li>空巢：该角色声明使用此牌后，其手牌数为0。<br><li>富甲：该角色声明使用此牌后，其手牌数为全场最多或之一。<br><li>残躯：该角色声明使用此牌后，其体力值为1。<br><li>助战：该角色声明使用此牌后，其发起“助战”。其他角色可弃置一张与此牌类型相同的卡牌，响应此“助战”。若有角色响应，则视为其应变成功。</ul></ul>',
+			应变篇: '<div style="margin:10px">应变机制</div><ul style="margin-top:0">' + "<li>当一名角色声明使用右下角标注了应变条件的卡牌后，若其满足应变条件，则其触发此牌的“应变”效果。<br><li>长按或鼠标右键点击卡牌，即可查看此牌所拥有的应变效果。" + '<br><li>应变条件<br><ul style="padding-left:20px;padding-top:5px"><li>空巢：该角色声明使用此牌后，其手牌数为0。<br><li>富甲：该角色声明使用此牌后，其手牌数为全场最多或之一。<br><li>残躯：该角色声明使用此牌后，其体力值为1。<br><li>孤军：场上不存在与该角色势力相同的角色。<br><li>助战：该角色声明使用此牌后，其发起“助战”。其他角色可弃置一张与此牌类型相同的卡牌，响应此“助战”。若有角色响应，则视为其应变成功。</ul></ul>',
 		},
 	};
 });

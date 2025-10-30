@@ -486,6 +486,7 @@ export class Library {
 				["kongchao", "soil"],
 				["fujia", "orange"],
 				["canqu", "fire"],
+				["gujun", "green"],
 				["force", "metal"],
 			]),
 			complex: new Map([
@@ -543,7 +544,7 @@ export class Library {
 							};
 							"step 1";
 							var type = get.type2(card);
-							event.list = game.filterPlayer(current => current != player && current.countCards("h") && (_status.connectMode || current.hasCard(cardx => get.type2(cardx) == type, "h"))).sortBySeat(_status.currentPhase || player);
+							event.list = game.filterPlayer(current => current != player && !trigger.targets.includes(current) && current.countCards("h") && (_status.connectMode || current.hasCard(cardx => get.type2(cardx) == type, "h"))).sortBySeat(_status.currentPhase || player);
 							event.id = get.id();
 							"step 2";
 							if (!event.list.length) {
@@ -655,6 +656,7 @@ export class Library {
 				["kongchao", event => !event.player.countCards("h")],
 				["fujia", event => event.player.isMaxHandcard()],
 				["canqu", event => event.player.getHp() == 1],
+				["gujun", event => !game.hasPlayer(current => current != event.player && current.isFriendOf(event.player))],
 			]),
 		},
 		effect: new Map([
@@ -693,6 +695,21 @@ export class Library {
 					if (cardx && cardx[1] && cardx[1].cards && cardx[1].cards.filterInD("od").length) {
 						player.gain(cardx[1].cards.filterInD("od"), "gain2");
 					}
+				},
+			],
+			[
+				"gainsha",
+				() => {
+					const cardx = trigger.respondTo;
+					if (cardx && cardx[1] && cardx[1].cards && cardx[1].cards.filterInD("od").length) {
+						player.gain(cardx[1].cards.filterInD("od"), "gain2");
+					}
+				},
+			],
+			[
+				"wushicishu",
+				() => {
+					player.getStat().card.sha--;
 				},
 			],
 			[
@@ -6444,10 +6461,17 @@ export class Library {
 				},
 				banGroup: {
 					name: "势力禁用",
-					init: false,
+					item: {
+						0: "不禁用",
+						1: "一",
+						2: "二",
+						3: "三",
+						4: "四",
+						5: "五",
+					},
+					init: 0,
 					frequent: true,
-					restart: true,
-					intro: "选将前将随机禁用一个势力",
+					intro: "选将前将随机禁用若干个势力",
 				},
 				initshow_draw: {
 					name: "首亮奖励",
@@ -10441,6 +10465,7 @@ export class Library {
 			western: "西",
 			key: "键",
 			jin: "晋",
+			han: "汉",
 			ye: "野",
 			double: "双",
 			wei2: "魏国",
@@ -10452,6 +10477,7 @@ export class Library {
 			western2: "西方",
 			key2: "KEY",
 			jin2: "晋朝",
+			han2: "汉朝",
 			ye2: "野心家",
 			double2: "双势力",
 			male: "男",
@@ -10585,6 +10611,7 @@ export class Library {
 			group_qun_bg: "群",
 			group_key_bg: "键",
 			group_jin_bg: "晋",
+			group_han_bg: "汉",
 			zhengsu: "整肃",
 			zhengsu_leijin: "擂进",
 			zhengsu_bianzhen: "变阵",

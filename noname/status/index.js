@@ -44,6 +44,7 @@ export class status {
 		yingbian_kongchao: [],
 		yingbian_fujia: [],
 		yingbian_canqu: [],
+		yingbian_gujun: [],
 		yingbian_force: [],
 	};
 	renku = [];

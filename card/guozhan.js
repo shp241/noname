@@ -676,7 +676,7 @@ game.import("card", function () {
 				type: "trick",
 				cardnature: "thunder",
 				filterTarget(card, player, target) {
-					return target != player && (get.mode() != "guozhan" || _status.mode == "yingbian" || _status.mode == "free" || target.countCards("e") > 0);
+					return target != player && (get.mode() != "guozhan" || target.countCards("e") > 0);
 				},
 				enable: true,
 				defaultYingbianEffect: "add",

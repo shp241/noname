@@ -46,3 +46,6 @@ update.html
 update.js
 *.txt
 *.pdf
+.editorconfig
+.eslintrc.json
+Dockerfile

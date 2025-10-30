@@ -1,6 +1,20 @@
 import { lib, game, ui, get, ai, _status } from "../../../noname.js";
 import { broadcastAll } from "./patch/game.js";
 
+function getRandomGroups(groups, banNumber) {
+  // 复制数组避免修改原数组
+  const shuffled = [...groups];
+
+  // Fisher-Yates 洗牌算法
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+
+  // 返回前 banNumber 个元素
+  return shuffled.slice(0, banNumber);
+}
+
 /**
  * @type {ContentFuncByAll}
  */
@@ -194,39 +208,69 @@ export const start = async (event, trigger, player) => {
 			game.players[i].getId();
 		}
 
-		const groups = ["wei", "shu", "wu", "qun", "jin"];
-		const chosen = lib.config.continue_name || [];
-		if (get.config("banGroup") && groups?.length && !chosen?.length) {
-			const group = groups.randomGet();
-			event.videoId = lib.status.videoId++;
-			let createDialog = function (group, id) {
-				_status.bannedGroup = group;
-				var dialog = ui.create.dialog(`本局禁用势力：${get.translation(group)}`, [[["", "", group]], "vcard"], "forcebutton");
-				dialog.videoId = id;
-			};
-			game.log("本局", `<span data-nature=${get.groupnature(group, "raw")}m>${get.translation(group)}势力</span>`, "遭到了禁用");
-			game.broadcastAll(createDialog, `group_${group}`, event.videoId);
-			for (const character in lib.character) {
-				const info = get.character(character);
-				if (info?.doubleGroup?.includes(group)) {
-					info.doubleGroup.remove(group);
-					if (info.group == group && info.doubleGroup?.length) {
-						info.group = info.doubleGroup[0];
-					}
-					if (info.doubleGroup.length == 1) {
-						info.doubleGroup = [];
-					}
-				}
-				if (info.group == group) {
-					info.isUnseen = true;
-				}
-				game.broadcast((name, info) => {
-					get.character(name) = info;
-				}, character, info);
-			}
-			await game.delay(5);
-			game.broadcastAll("closeDialog", event.videoId);
-		}
+		const groups = ["wei", "shu", "wu", "qun", "jin","han"];
+    let banNumber = parseInt(get.config("banGroup"));
+    if (banNumber > 0) {
+        const banGroups = getRandomGroups(groups, banNumber);
+        let videoId = lib.status.videoId++;
+        let createDialog = function (group, id) {
+        // _status.bannedGroup = group;
+        // 将禁用势力数组转换为翻译后的字符串
+        const bannedGroupsText = banGroups.map(group => get.translation(group)).join('、');
+        var dialog = ui.create.dialog(`本局禁用势力：${bannedGroupsText}`,[banGroups,"vcard"],"forcebutton");
+        dialog.videoId = id;
+        };
+        // 一次性记录所有禁用势力的日志
+        const bannedGroupsText = banGroups.map(group =>
+            `<span data-nature="${get.groupnature(group, "raw")}">${get.translation(group)}势力</span>`
+        ).join('、');
+
+        game.log("本局", bannedGroupsText, "遭到了禁用");
+
+        // 循环广播每个势力的对话框
+        banGroups.forEach(group => {
+            game.broadcastAll(createDialog, `group_${group}`, event.videoId);
+        });
+        // 第一步：处理双势力角色
+        for (const character in lib.character) {
+            const info = get.character(character);
+
+            if (info?.doubleGroup?.length) {
+                // 检查每个被禁用的势力是否在双势力中
+                for (const bannedGroup of banGroups) {
+                    if (info.doubleGroup.includes(bannedGroup)) {
+                        info.doubleGroup.remove(bannedGroup);
+
+                        // 如果当前势力被禁用，切换到其他势力
+                        if (info.group == bannedGroup && info.doubleGroup.length > 0) {
+                            info.group = info.doubleGroup[0];
+                        }
+
+                        // 如果双势力只剩一个，清除双势力标记
+                        if (info.doubleGroup.length === 1) {
+                            info.doubleGroup = [];
+                        }
+                    }
+                }
+            }
+        }
+        // 第二步：处理单势力角色
+        for (const character in lib.character) {
+            const info = get.character(character);
+
+            // 检查角色势力是否在被禁用列表中
+            if (banGroups.includes(info.group)) {
+                info.isUnseen = true;
+            }
+
+            // 广播更新
+            game.broadcast((name, characterInfo) => {
+                get.character(name) = characterInfo;
+            }, character, info);
+        }
+        await game.delay(5);
+        game.broadcastAll("closeDialog", videoId);
+    }
 
 		if (_status.brawl && _status.brawl.chooseCharacterBefore) {
 			await _status.brawl.chooseCharacterBefore();

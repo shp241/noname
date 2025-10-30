@@ -260,6 +260,8 @@ export class GameGuozhan extends Game {
 			shu: "蜀",
 			wu: "吴",
 			qun: "群",
+			jin: "晋",
+			han: "汉",
 			ye: "野",
 			unknown: "猜",
 		};
@@ -283,6 +285,16 @@ export class GameGuozhan extends Game {
 		if (get.population("qun") >= num) {
 			// @ts-expect-error 祖宗之法就是这么写的
 			delete list.qun;
+			noye = false;
+		}
+		if (get.population("jin") >= num) {
+			// @ts-expect-error 祖宗之法就是这么写的
+			delete list.jin;
+			noye = false;
+		}
+		if (get.population("han") >= num) {
+			// @ts-expect-error 祖宗之法就是这么写的
+			delete list.han;
 			noye = false;
 		}
 		if (noye) {
@@ -311,6 +323,9 @@ export class GameGuozhan extends Game {
 					list[i] = "Key";
 					break;
 				case "jin":
+					list[i] += "朝";
+					break;
+				case "han":
 					list[i] += "朝";
 					break;
 				default:
