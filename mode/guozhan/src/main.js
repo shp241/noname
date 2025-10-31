@@ -214,7 +214,7 @@ export const start = async (event, trigger, player) => {
         const banGroups = getRandomGroups(groups, banNumber);
         let videoId = lib.status.videoId++;
         let createDialog = function (group, id) {
-        // _status.bannedGroup = group;
+        _status.bannedGroups = banGroups;
         // 将禁用势力数组转换为翻译后的字符串
         const bannedGroupsText = banGroups.map(group => get.translation(group)).join('、');
         var dialog = ui.create.dialog(`本局禁用势力：${bannedGroupsText}`,[banGroups,"vcard"],"forcebutton");
@@ -231,44 +231,143 @@ export const start = async (event, trigger, player) => {
         banGroups.forEach(group => {
             game.broadcastAll(createDialog, `group_${group}`, event.videoId);
         });
-        // 第一步：处理双势力角色
-        for (const character in lib.character) {
-            const info = get.character(character);
+        // 完整的势力禁用逻辑 - 单段代码实现
+				const updatedCharacters = new Map();
+				if(lib.config.extension_qj_kejiang){
+					// 第一步：检查所有角色是否需要启用客将势力
+					for (const character in lib.character) {
+							const info = get.character(character);
+							if (!info) continue;
 
-            if (info?.doubleGroup?.length) {
-                // 检查每个被禁用的势力是否在双势力中
-                for (const bannedGroup of banGroups) {
-                    if (info.doubleGroup.includes(bannedGroup)) {
-                        info.doubleGroup.remove(bannedGroup);
+							// 计算角色的所有原势力（主势力 + 双势力）
+							const originalGroups = [info.group];
+							if (info.doubleGroup?.length) {
+									originalGroups.push(...info.doubleGroup);
+							}
+							const uniqueOriginalGroups = [...new Set(originalGroups)];
+							
+							// 检查角色的所有原势力是否都被禁用
+							const allOriginalGroupsBanned = uniqueOriginalGroups.every(group => banGroups.includes(group));
+							
+							// 如果所有原势力都被禁用且有客将势力，则启用客将势力
+							if (allOriginalGroupsBanned && info.keGroup && info.keGroup.length > 0) {
+									// 过滤客将势力中的禁用势力
+									const validKeGroups = info.keGroup.filter(group => !banGroups.includes(group));
+									
+									if (validKeGroups.length === 0) {
+											// 客将势力也全部被禁用，标记为不可见
+											info.isUnseen = true;
+									} else if (validKeGroups.length === 1) {
+											// 只有一个有效客将势力，设置为单势力
+											info.group = validKeGroups[0];
+											info.doubleGroup = [];
+									} else {
+											// 多个有效客将势力，设置为双势力
+											info.doubleGroup = validKeGroups;
+											info.group = validKeGroups[0];
+									}
+									
+									// 更新客将势力为过滤后的版本
+									info.keGroup = validKeGroups;
+									updatedCharacters.set(character, info);
+							}
+					}
+				}
+				// 第二步：处理双势力角色（包括可能刚设置了客将势力的角色）
+				for (const character in lib.character) {
+						const info = get.character(character);
+						if (!info) continue;
 
-                        // 如果当前势力被禁用，切换到其他势力
-                        if (info.group == bannedGroup && info.doubleGroup.length > 0) {
-                            info.group = info.doubleGroup[0];
-                        }
+						let updated = false;
 
-                        // 如果双势力只剩一个，清除双势力标记
-                        if (info.doubleGroup.length === 1) {
-                            info.doubleGroup = [];
-                        }
-                    }
-                }
-            }
-        }
-        // 第二步：处理单势力角色
-        for (const character in lib.character) {
-            const info = get.character(character);
+						// 处理双势力中的禁用势力
+						if (info.doubleGroup?.length) {
+								const originalDoubleLength = info.doubleGroup.length;
+								info.doubleGroup = info.doubleGroup.filter(group => !banGroups.includes(group));
+								
+								if (info.doubleGroup.length !== originalDoubleLength) {
+										updated = true;
+								}
 
-            // 检查角色势力是否在被禁用列表中
-            if (banGroups.includes(info.group)) {
-                info.isUnseen = true;
-            }
+								// 如果当前主势力被禁用且还有其他可用势力，切换到第一个可用势力
+								if (banGroups.includes(info.group) && info.doubleGroup.length > 0) {
+										info.group = info.doubleGroup[0];
+										updated = true;
+								}
 
-            // 广播更新
-            game.broadcast((name, characterInfo) => {
-                get.character(name) = characterInfo;
-            }, character, info);
-        }
-        await game.delay(5);
+								// 双势力只剩一个时清除双势力标记
+								if (info.doubleGroup.length === 1) {
+										info.doubleGroup = [];
+										updated = true;
+								}
+						}
+
+						// 处理客将势力中的禁用势力（如果有）
+						if (info.keGroup?.length) {
+								const originalKeLength = info.keGroup.length;
+								info.keGroup = info.keGroup.filter(group => !banGroups.includes(group));
+								if (info.keGroup.length !== originalKeLength) {
+										updated = true;
+								}
+						}
+
+						if (updated) {
+								updatedCharacters.set(character, info);
+						}
+				}
+
+				// 第三步：最终检查 - 确保每个角色都有可用势力
+				for (const character in lib.character) {
+						const info = get.character(character);
+						if (!info) continue;
+
+						// 计算角色当前的所有可用势力（包括主势力、双势力和客将势力）
+						const currentGroups = [info.group];
+						if (info.doubleGroup?.length) {
+								currentGroups.push(...info.doubleGroup);
+						}
+						if (info.keGroup?.length) {
+								currentGroups.push(...info.keGroup);
+						}
+						const uniqueCurrentGroups = [...new Set(currentGroups)];
+						
+						// 检查角色是否有任何可用势力（不被禁用的势力）
+						const hasValidGroup = uniqueCurrentGroups.some(group => !banGroups.includes(group));
+						
+						if (!hasValidGroup) {
+								// 没有任何可用势力，标记为不可见
+								if (!info.isUnseen) {
+										info.isUnseen = true;
+										updatedCharacters.set(character, info);
+								}
+						} else {
+								// 检查主势力是否被禁用
+								if (banGroups.includes(info.group)) {
+										// 主势力被禁用，需要切换到其他可用势力
+										const availableGroups = uniqueCurrentGroups.filter(group => !banGroups.includes(group));
+										if (availableGroups.length > 0) {
+												info.group = availableGroups[0];
+												
+												// 如果只有一个可用势力，清除双势力标记
+												if (availableGroups.length === 1 && info.doubleGroup?.length) {
+														info.doubleGroup = [];
+												}
+												
+												updatedCharacters.set(character, info);
+										}
+								}
+						}
+				}
+
+				// 第四步：广播所有更新
+				let broadcastCount = 0;
+				updatedCharacters.forEach((info, character) => {
+						game.broadcast((name, characterInfo) => {
+								get.character(name) = characterInfo;
+						}, character, info);
+						broadcastCount++;
+				});
+				await game.delay(5);
         game.broadcastAll("closeDialog", videoId);
     }
 

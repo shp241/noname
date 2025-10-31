@@ -81,6 +81,11 @@ export class Character {
 	 **/
 	doubleGroup = [];
 	/**
+	 * 客将势力
+	 * @type { string[] }
+	 **/
+	keGroup = [];
+	/**
 	 * 武将牌是否为minskin
 	 * @type { boolean }
 	 **/
@@ -220,6 +225,7 @@ export class Character {
 		this.dualSideCharacter = void 0;
 		this.img = void 0;
 		this.doubleGroup = [];
+		this.keGroup = [];
 		this.clans = [];
 		this.initFilters = [];
 		this.trashBin = [];
@@ -281,6 +287,8 @@ export class Character {
 				this.groupInGuozhan = item.slice(8);
 			} else if (item.startsWith("doublegroup:")) {
 				this.doubleGroup = item.slice(12).split(":");
+			} else if (item.startsWith("kegroup:")) {
+				this.keGroup = item.slice(8).split(":");
 			} else if (item.startsWith("clan:")) {
 				clans.addArray(item.slice(5).split("|"));
 			} else if (item.startsWith("InitFilter:")) {
@@ -417,6 +425,9 @@ export class Character {
 		}
 		if (character.doubleGroup.length > 0) {
 			trashes.push(`doublegroup:${character.doubleGroup.join(":")}`);
+		}
+		if (character.keGroup.length > 0) {
+			trashes.push(`kegroup:${character.keGroup.join(":")}`);
 		}
 		if (character.clans.length > 0) {
 			character.clans.forEach(item => trashes.push(`clan:${item}`));

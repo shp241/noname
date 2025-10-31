@@ -4022,6 +4022,20 @@ span[data-nature="metalmm"] {
 	text-shadow: black 0 0 1px, rgba(255, 203, 0, 1) 0 0 2px, rgba(255, 203, 0, 1) 0 0 2px, rgba(255, 203, 0, 1) 0 0 2px, rgba(255, 203, 0, 1) 0 0 2px, black 0 0 1px;
 }
 
+.player .identity[data-color="han"],
+div[data-nature="han"],
+span[data-nature="han"] {
+  text-shadow: black 0 0 1px, rgba(255, 215, 0, 1) 0 0 2px, rgba(255, 215, 0, 1) 0 0 5px, rgba(255, 215, 0, 1) 0 0 10px, rgba(255, 215, 0, 1) 0 0 10px;
+}
+div[data-nature="hanm"],
+span[data-nature="hanm"] {
+  text-shadow: black 0 0 1px, rgba(255, 215, 0, 1) 0 0 2px, rgba(255, 215, 0, 1) 0 0 5px, rgba(255, 215, 0, 1) 0 0 5px, rgba(255, 215, 0, 1) 0 0 5px, black 0 0 1px;
+}
+div[data-nature="hanmm"],
+span[data-nature="hanmm"] {
+  text-shadow: black 0 0 1px, rgba(255, 215, 0, 1) 0 0 2px, rgba(255, 215, 0, 1) 0 0 2px, rgba(255, 215, 0, 1) 0 0 2px, rgba(255, 215, 0, 1) 0 0 2px, black 0 0 1px;
+}
+
 .player .identity[data-color="key"],
 div[data-nature="key"],
 span[data-nature="key"] {
