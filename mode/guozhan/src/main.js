@@ -233,7 +233,7 @@ export const start = async (event, trigger, player) => {
         });
         // 完整的势力禁用逻辑 - 单段代码实现
 				const updatedCharacters = new Map();
-				if(lib.config.extension_qj_kejiang){
+				if(lib.config.extension_乔剪国战_kejiang){
 					// 第一步：检查所有角色是否需要启用客将势力
 					for (const character in lib.character) {
 							const info = get.character(character);
