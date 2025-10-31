@@ -3279,9 +3279,31 @@ export class Game extends GameCompatible {
 			if (!extensionFile) {
 				extensionFile = zip.file("extension.ts");
 				if (!extensionFile) {
-					throw new Error("未找到extension.js");
+					// 尝试在唯一的顶层文件夹内查找
+					const fileKeys = Object.keys(zip.files);
+					const topLevelFolders = new Set();
+					for (const key of fileKeys) {
+						const slashIndex = key.indexOf("/");
+						if (slashIndex > 0) {
+							topLevelFolders.add(key.slice(0, slashIndex));
+						}
+					}
+					if (topLevelFolders.size === 1) {
+						const onlyFolder = Array.from(topLevelFolders)[0];
+						extensionFile = zip.file(`${onlyFolder}/extension.js`);
+						if (!extensionFile) {
+							extensionFile = zip.file(`${onlyFolder}/extension.ts`);
+							if (extensionFile) {
+								isTsFile = true;
+							}
+						}
+					}
+					if (!extensionFile) {
+						throw new Error("未找到extension.js");
+					}
+				} else {
+					isTsFile = true;
 				}
-				isTsFile = true;
 			}
 			/** @type { string } */
 			// @ts-expect-error ignore
