@@ -902,6 +902,8 @@ game.import("card", function () {
 			yingbian_gain_tag: "(反甲)",
 			yingbian_hit_tag: "(强命)",
 			yingbian_all_tag: "(双项)",
+			yingbian_gainsha_tag: "(获得)",
+			yingbian_wushicishu_tag: "(无次)",
 		},
 		list: [
 			["spade", 1, "juedou"],

@@ -615,6 +615,61 @@ export class GameGuozhan extends Game {
 		// @ts-expect-error 祖宗之法就是这么写的
 		return super.addVideo(type, player, content);
 	}
+
+	tongling = {};
+	getTongling(group){
+		if(!this.tongling){
+			this.tongling={};
+			return [];
+		}
+		if(group in this.tongling){
+			let t=[];
+			for(let k in this.tongling[group]){
+				if(!t.includes(this.tongling[group][k])){
+					t.push(k);
+				}
+			}
+			return t;
+		}
+		return [];
+	}
+
+	addTongling(group,name,times=Infinity){
+		if(!this.tongling){
+			this.tongling={};
+		}
+		if(!(group in this.tongling)){
+			this.tongling[group]=[];
+		}
+		this.tongling[group][name]=times;
+	}
+
+	removeTongling(group,name){
+		if(!this.tongling){
+			this.tongling={};
+			return;
+		}
+		if(group in this.tongling){
+			if(this.tongling[group].includes(name)){
+				this.tongling[group].remove(name);
+			}
+		}
+	}
+
+	useTongling(group,name){
+		if(!this.tongling){
+			this.tongling={};
+			return;
+		}
+		if(group in this.tongling){
+			if(this.tongling[group].includes(name)){
+				this.tongling[group][name]--;
+				if(this.tongling[group][name]<=0){
+					this.tongling[group].remove(name);
+				}
+			}
+		}
+	}
 }
 
 /**

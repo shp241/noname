@@ -301,18 +301,19 @@ export const start = async (event, trigger, player) => {
 										updated = true;
 								}
 						}
+						if(lib.config.extension_乔剪国战_kejiang){
+							// 处理客将势力中的禁用势力（如果有）
+							if (info.keGroup?.length) {
+									const originalKeLength = info.keGroup.length;
+									info.keGroup = info.keGroup.filter(group => !banGroups.includes(group));
+									if (info.keGroup.length !== originalKeLength) {
+											updated = true;
+									}
+							}
 
-						// 处理客将势力中的禁用势力（如果有）
-						if (info.keGroup?.length) {
-								const originalKeLength = info.keGroup.length;
-								info.keGroup = info.keGroup.filter(group => !banGroups.includes(group));
-								if (info.keGroup.length !== originalKeLength) {
-										updated = true;
-								}
-						}
-
-						if (updated) {
-								updatedCharacters.set(character, info);
+							if (updated) {
+									updatedCharacters.set(character, info);
+							}
 						}
 				}
 
@@ -326,8 +327,10 @@ export const start = async (event, trigger, player) => {
 						if (info.doubleGroup?.length) {
 								currentGroups.push(...info.doubleGroup);
 						}
-						if (info.keGroup?.length) {
+						if(lib.config.extension_乔剪国战_kejiang){
+							if (info.keGroup?.length) {
 								currentGroups.push(...info.keGroup);
+							}
 						}
 						const uniqueCurrentGroups = [...new Set(currentGroups)];
 						

@@ -641,6 +641,14 @@ export class Card extends HTMLDivElement {
 						_status.cardtag[tag] = [];
 					}
 					_status.cardtag[tag].add(this.cardid);
+					// 将图标直接挂到 .card 根节点，便于全局定位
+					var icon = document.createElement("img");
+					icon.className = "cardtag-icon";
+					icon.src = "image/card/" + tag + ".png";
+					icon.onerror = function () {
+						this.style.display = "none";
+					};
+					this.appendChild(icon);
 					tagstr += lib.translate[tag + "_tag"];
 					//if(i<tags.length-1) tagstr+=' ';
 				}
