@@ -471,10 +471,10 @@ export class PlayerGuozhan extends Player {
 		return next;
 	}
 	hasMainCharacter() {
-		return this.name1.indexOf("gz_shibing") != 0;
+		return this.name1.indexOf("gz_shibing") != 0 && !lib.character[this.name1].isShibing;
 	}
 	hasViceCharacter() {
-		return this.name2.indexOf("gz_shibing") != 0;
+		return this.name2.indexOf("gz_shibing") != 0 && !lib.character[this.name2].isShibing;
 	}
 	$showCharacter(num, log) {
 		var showYe = false;

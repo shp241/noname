@@ -755,7 +755,7 @@ export class Click {
 			}
 		} else {
 			if (get.mode() == "guozhan") {
-				list = { wei: "魏", shu: "蜀", wu: "吴", qun: "群", jin: "晋" , han: "汉"};
+				list = { wei: "魏", shu: "蜀", wu: "吴", qun: "群", jin: "晋", han: "汉" };
 				if (_status.forceKey) {
 					list.key = "键";
 				}
@@ -3015,16 +3015,36 @@ export class Click {
 			}
 			const skillInformation = get.info(gameEvent.skill),
 				viewAs = skillInformation.viewAs;
+			let viewAsTags = null;
 			if (typeof viewAs == "function") {
 				const viewedAs = viewAs(result.cards, gameEvent.player);
 				if (viewedAs) {
+					// 如果函数返回的是对象且包含 tags，则保存 tags
+					if (viewedAs && typeof viewedAs == "object" && !(viewedAs instanceof lib.element.VCard) && viewedAs.tags) {
+						viewAsTags = viewedAs.tags;
+					}
 					result.card = get.autoViewAs(viewedAs);
 				}
 			} else if (viewAs) {
+				// 如果 viewAs 是对象且包含 tags，则保存 tags
+				if (typeof viewAs == "object" && viewAs.tags) {
+					viewAsTags = viewAs.tags;
+				}
 				result.card = get.autoViewAs(viewAs);
 			}
 			const resultCard = result.card;
 			if (resultCard) {
+				// 应用 viewAs 中定义的 tags
+				if (viewAsTags && Array.isArray(viewAsTags)) {
+					if (!resultCard.cardtags) {
+						resultCard.cardtags = [];
+					}
+					viewAsTags.forEach(tag => {
+						if (!resultCard.cardtags.includes(tag)) {
+							resultCard.cardtags.push(tag);
+						}
+					});
+				}
 				const cards = result.cards;
 				if (cards.length == 1) {
 					const firstCard = cards[0];

@@ -104,33 +104,45 @@ export const start = async (event, trigger, player) => {
 					// @ts-expect-error 祖宗之法就是这么写的
 					_status.separatism = true;
 				}
-				// @ts-expect-error 祖宗之法就是这么写的
-				const pack = lib.characterPack.mode_guozhan;
-				if (mode == "yingbian") {
-					delete lib.translate.shuiyanqijunx_info_guozhan;
+				
+				// 检查是否启用了国战武将包
+				const shouldLoadCharacters = lib.config.connect_characters.includes("mode_guozhan");
+				
+				if (shouldLoadCharacters) {
 					// @ts-expect-error 祖宗之法就是这么写的
-					const pack2 = lib.yingbian_guozhan;
-					for (const i in pack2) {
-						pack[i] = pack2[i];
+					const pack = lib.characterPack.mode_guozhan;
+					if (mode == "yingbian") {
+						delete lib.translate.shuiyanqijunx_info_guozhan;
+						// @ts-expect-error 祖宗之法就是这么写的
+						const pack2 = lib.yingbian_guozhan;
+						for (const i in pack2) {
+							pack[i] = pack2[i];
+						}
 					}
-				}
-				for (let i = 0; i < game.players.length; ++i) {
-					game.players[i].node.name.hide();
-					game.players[i].node.name2.hide();
-				}
-				for (const character in pack) {
-					lib.character[character] = pack[character];
-					if (!lib.translate["#" + character + ":die"] && !lib.character[character].dieAudios?.length) {
-						let list = lib.character?.[character.slice(3)]?.dieAudios;
-						lib.character[character].dieAudios = list?.length ? list : [character.slice(3)];
+					for (let i = 0; i < game.players.length; ++i) {
+						game.players[i].node.name.hide();
+						game.players[i].node.name2.hide();
 					}
-					if (!lib.translate[character]) {
-						lib.translate[character] = lib.translate[character.slice(3)];
+					for (const character in pack) {
+						lib.character[character] = pack[character];
+						if (!lib.translate["#" + character + ":die"] && !lib.character[character].dieAudios?.length) {
+							let list = lib.character?.[character.slice(3)]?.dieAudios;
+							lib.character[character].dieAudios = list?.length ? list : [character.slice(3)];
+						}
+						if (!lib.translate[character]) {
+							lib.translate[character] = lib.translate[character.slice(3)];
+						}
 					}
-				}
-				for (const character in lib.character) {
-					if (lib.selectGroup.includes(lib.character[character][1]) || lib.character[character].groupInGuozhan) {
-						lib.character[character].group = lib.character[character].groupInGuozhan || "qun";
+					for (const character in lib.character) {
+						if (lib.selectGroup.includes(lib.character[character][1]) || lib.character[character].groupInGuozhan) {
+							lib.character[character].group = lib.character[character].groupInGuozhan || "qun";
+						}
+					}
+				} else {
+					// 即使不加载武将，也需要隐藏玩家名称
+					for (let i = 0; i < game.players.length; ++i) {
+						game.players[i].node.name.hide();
+						game.players[i].node.name2.hide();
 					}
 				}
 				//lib.characterReplace={};
@@ -161,18 +173,26 @@ export const start = async (event, trigger, player) => {
 				// @ts-expect-error 祖宗之法就是这么写的
 				lib.card.list = lib.guozhanPile_yingbian.slice(0);
 				delete lib.translate.shuiyanqijunx_info_guozhan;
-				// @ts-expect-error 祖宗之法就是这么写的
-				const pack = lib.yingbian_guozhan;
-				for (const i in pack) {
-					lib.character[i] = pack[i];
+				
+				// 检查是否启用了国战武将包
+				const shouldLoadCharacters = playback || 
+					(lib.config.mode !== "connect" && lib.config.characters.includes("mode_guozhan")) ||
+					(lib.config.mode === "connect" && lib.config.connect_characters.includes("mode_guozhan"));
+				
+				if (shouldLoadCharacters) {
 					// @ts-expect-error 祖宗之法就是这么写的
-					lib.characterPack.mode_guozhan[i] = pack[i];
-					if (!lib.translate["#" + i + ":die"] && !lib.character[i].dieAudios?.length) {
-						let list = lib.character?.[i.slice(3)]?.dieAudios;
-						lib.character[i].dieAudios = list?.length ? list : [i.slice(3)];
-					}
-					if (!lib.translate[i]) {
-						lib.translate[i] = lib.translate[i.slice(3)];
+					const pack = lib.yingbian_guozhan;
+					for (const i in pack) {
+						lib.character[i] = pack[i];
+						// @ts-expect-error 祖宗之法就是这么写的
+						lib.characterPack.mode_guozhan[i] = pack[i];
+						if (!lib.translate["#" + i + ":die"] && !lib.character[i].dieAudios?.length) {
+							let list = lib.character?.[i.slice(3)]?.dieAudios;
+							lib.character[i].dieAudios = list?.length ? list : [i.slice(3)];
+						}
+						if (!lib.translate[i]) {
+							lib.translate[i] = lib.translate[i.slice(3)];
+						}
 					}
 				}
 				break;
@@ -233,7 +253,7 @@ export const start = async (event, trigger, player) => {
         });
         // 完整的势力禁用逻辑 - 单段代码实现
 				const updatedCharacters = new Map();
-				if(lib.config.extension_乔剪国战_kejiang){
+				if(get.config("kejiang")){
 					// 第一步：检查所有角色是否需要启用客将势力
 					for (const character in lib.character) {
 							const info = get.character(character);
@@ -301,7 +321,7 @@ export const start = async (event, trigger, player) => {
 										updated = true;
 								}
 						}
-						if(lib.config.extension_乔剪国战_kejiang){
+						if(get.config("kejiang")){
 							// 处理客将势力中的禁用势力（如果有）
 							if (info.keGroup?.length) {
 									const originalKeLength = info.keGroup.length;
@@ -327,7 +347,7 @@ export const start = async (event, trigger, player) => {
 						if (info.doubleGroup?.length) {
 								currentGroups.push(...info.doubleGroup);
 						}
-						if(lib.config.extension_乔剪国战_kejiang){
+						if(get.config("kejiang")){
 							if (info.keGroup?.length) {
 								currentGroups.push(...info.keGroup);
 							}
@@ -453,6 +473,17 @@ export const start = async (event, trigger, player) => {
 
 export const startBefore = () => {
 	const playback = localStorage.getItem(lib.configprefix + "playback");
+	
+	// 检查是否启用了国战武将包
+	if (!playback && lib.config.mode !== "connect") {
+		if (!lib.config.characters.includes("mode_guozhan")) {
+			return;
+		}
+	} else if (lib.config.mode === "connect") {
+		if (!lib.config.connect_characters.includes("mode_guozhan")) {
+			return;
+		}
+	}
 
 	// @ts-expect-error 祖宗之法就是这么写的
 	for (let character in lib.characterPack.mode_guozhan) {
@@ -479,6 +510,17 @@ export const startBefore = () => {
 }
 
 export const onreinit = () => {
+	// 检查是否启用了国战武将包
+	if (lib.config.mode !== "connect") {
+		if (!lib.config.characters.includes("mode_guozhan")) {
+			return;
+		}
+	} else {
+		if (!lib.config.connect_characters.includes("mode_guozhan")) {
+			return;
+		}
+	}
+
 	// @ts-expect-error 祖宗之法就是这么写的
 	const pack = lib.characterPack.mode_guozhan;
 

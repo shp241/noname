@@ -346,7 +346,7 @@ export class GameGuozhan extends Game {
 			? get.modetrans({
 					mode: lib.config.mode,
 					separatism: true,
-				})
+			  })
 			: get.cnNumber(parseInt(get.config("player_number"))) + "人" + get.translation(lib.config.mode);
 		if (game.me.identity == "ye") {
 			str2 += " - 野心家";
@@ -617,15 +617,15 @@ export class GameGuozhan extends Game {
 	}
 
 	tongling = {};
-	getTongling(group){
-		if(!this.tongling){
-			this.tongling={};
+	getTongling(group) {
+		if (!this.tongling) {
+			this.tongling = {};
 			return [];
 		}
-		if(group in this.tongling){
-			let t=[];
-			for(let k in this.tongling[group]){
-				if(!t.includes(this.tongling[group][k])){
+		if (group in this.tongling) {
+			let t = [];
+			for (let k in this.tongling[group]) {
+				if (!t.includes(this.tongling[group][k] && this.tongling[group][k] > 0)) {
 					t.push(k);
 				}
 			}
@@ -634,41 +634,47 @@ export class GameGuozhan extends Game {
 		return [];
 	}
 
-	addTongling(group,name,times=Infinity){
-		if(!this.tongling){
-			this.tongling={};
+	addTongling(group, name, times = Infinity) {
+		if (!this.tongling) {
+			this.tongling = {};
 		}
-		if(!(group in this.tongling)){
-			this.tongling[group]=[];
+		if (!(group in this.tongling)) {
+			this.tongling[group] = [];
 		}
-		this.tongling[group][name]=times;
+		if (!(name in this.tongling[group]) || times == Infinity) {
+			this.tongling[group][name] = times;
+			return true;
+		}
+		return false;
 	}
 
-	removeTongling(group,name){
-		if(!this.tongling){
-			this.tongling={};
+	removeTongling(group, name) {
+		if (!this.tongling) {
+			this.tongling = {};
 			return;
 		}
-		if(group in this.tongling){
-			if(this.tongling[group].includes(name)){
-				this.tongling[group].remove(name);
+		if (group in this.tongling) {
+			if (name in this.tongling[group]) {
+				delete this.tongling[group][name];
 			}
 		}
 	}
 
-	useTongling(group,name){
-		if(!this.tongling){
-			this.tongling={};
+	useTongling(group, name) {
+		if (!this.tongling) {
+			this.tongling = {};
 			return;
 		}
-		if(group in this.tongling){
-			if(this.tongling[group].includes(name)){
+		if (group in this.tongling) {
+			if (name in this.tongling[group]) {
 				this.tongling[group][name]--;
-				if(this.tongling[group][name]<=0){
-					this.tongling[group].remove(name);
+				if (this.tongling[group][name] <= 0) {
+					return false;
 				}
+				return true;
 			}
 		}
+		return false;
 	}
 }
 

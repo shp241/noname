@@ -6419,7 +6419,7 @@ export class Library {
 				},
 				guozhan_mode: {
 					name: "游戏模式",
-					init: "normal",
+					init: "yingbian",
 					item: {
 						normal: "势备",
 						yingbian: "应变",
@@ -6469,7 +6469,7 @@ export class Library {
 						4: "四",
 						5: "五",
 					},
-					init: 0,
+					init: 2,
 					frequent: true,
 					intro: "选将前将随机禁用若干个势力",
 				},
@@ -6540,14 +6540,21 @@ export class Library {
 				},
 				onlyguozhan: {
 					name: "使用国战武将",
-					init: true,
+					init: false,
 					frequent: true,
 					restart: true,
 					intro: "开启武将技能将替换为国战版本并禁用非国战武将",
 				},
+				kejiang: {
+					name: "启用客将势力",
+					init: false,
+					frequent: true,
+					restart: true,
+					intro: "开启后将会启用客将势力",
+				},
 				guozhanSkin: {
 					name: "使用国战皮肤",
-					init: true,
+					init: false,
 					frequent: true,
 					restart: true,
 					intro: "开启此选项后，将会把有国战专属皮肤的武将替换为国战皮肤",

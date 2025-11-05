@@ -71,6 +71,36 @@ export const characterPackMenu = function (connectMenu) {
 								node.link.firstChild.classList.remove("on");
 							}
 						}
+						continue;
+					}
+					// 国战模式开启逻辑
+					if (node.mode == "mode_guozhan") {
+						if (connectMenu) {
+							if (!lib.config.connect_characters.includes(node.mode)) {
+								node.classList.remove("off");
+								if (node.link) {
+									node.link.firstChild.classList.add("on");
+								}
+							} else {
+								node.classList.add("off");
+								if (node.link) {
+									node.link.firstChild.classList.remove("on");
+								}
+							}
+						} else {
+							if (lib.config.characters.includes(node.mode)) {
+								node.classList.remove("off");
+								if (node.link) {
+									node.link.firstChild.classList.add("on");
+								}
+							} else {
+								node.classList.add("off");
+								if (node.link) {
+									node.link.firstChild.classList.remove("on");
+								}
+							}
+						}
+						continue;
 					}
 					continue;
 				}
@@ -218,6 +248,11 @@ export const characterPackMenu = function (connectMenu) {
 					page.appendChild(cfgnode);
 					cfgnodeAI.style.marginTop = "0px";
 				}
+				page.appendChild(cfgnodeAI);
+			} else if (mode == "mode_guozhan") {
+				// 国战模式也添加开启和仅点将可用选项
+				cfgnodeAI.style.marginTop = "0px";
+				page.appendChild(cfgnode);
 				page.appendChild(cfgnodeAI);
 			} else {
 				page.style.paddingTop = "8px";
