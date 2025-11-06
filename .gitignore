@@ -49,3 +49,4 @@ update.js
 .editorconfig
 .eslintrc.json
 Dockerfile
+.gitmodules
