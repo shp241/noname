@@ -622,16 +622,16 @@ export class GameGuozhan extends Game {
 			this.tongling = {};
 			return [];
 		}
-		if (group in this.tongling) {
-			let t = [];
-			for (let k in this.tongling[group]) {
-				if (!t.includes(this.tongling[group][k] && this.tongling[group][k] > 0)) {
-					t.push(k);
-				}
-			}
-			return t;
+		if (!(group in this.tongling)) {
+			return [];
 		}
-		return [];
+		let t = [];
+		for (let item of this.tongling[group]) {
+			if (item.times > 0 && !t.includes(item.name)) {
+				t.push(item.name);
+			}
+		}
+		return t;
 	}
 
 	addTongling(group, name, times = Infinity) {
@@ -641,11 +641,16 @@ export class GameGuozhan extends Game {
 		if (!(group in this.tongling)) {
 			this.tongling[group] = [];
 		}
-		if (!(name in this.tongling[group]) || times == Infinity) {
-			this.tongling[group][name] = times;
-			return true;
+		// 限一统领（times = 1）：仅在不存在于 game.tongling[group] 时可被 add
+		if (times === 1) {
+			for (let item of this.tongling[group]) {
+				if (item.name === name && item.times > 0) {
+					return false;
+				}
+			}
 		}
-		return false;
+		this.tongling[group].push({ name, times });
+		return true;
 	}
 
 	removeTongling(group, name) {
@@ -653,9 +658,23 @@ export class GameGuozhan extends Game {
 			this.tongling = {};
 			return;
 		}
-		if (group in this.tongling) {
-			if (name in this.tongling[group]) {
-				delete this.tongling[group][name];
+		if (!(group in this.tongling)) {
+			return;
+		}
+		// 不限一统领：删除一个同名项
+		// 限一统领：将 times 设为 0
+		for (let i = 0; i < this.tongling[group].length; i++) {
+			let item = this.tongling[group][i];
+			if (item.name === name) {
+				if (item.times === Infinity) {
+					// 不限一统领：删除一个
+					this.tongling[group].splice(i, 1);
+					return;
+				} else {
+					// 限一统领：将 times 设为 0
+					item.times = 0;
+					return;
+				}
 			}
 		}
 	}
@@ -663,15 +682,23 @@ export class GameGuozhan extends Game {
 	useTongling(group, name) {
 		if (!this.tongling) {
 			this.tongling = {};
-			return;
+			return false;
 		}
-		if (group in this.tongling) {
-			if (name in this.tongling[group]) {
-				this.tongling[group][name]--;
-				if (this.tongling[group][name] <= 0) {
-					return false;
+		if (!(group in this.tongling)) {
+			return false;
+		}
+		// 不限一统领：不受影响，返回 true
+		// 限一统领：times--，如果 times <= 0 返回 false
+		for (let item of this.tongling[group]) {
+			if (item.name === name && item.times > 0) {
+				if (item.times === Infinity) {
+					// 不限一统领：不受影响
+					return true;
+				} else {
+					// 限一统领：times--
+					item.times--;
+					return item.times > 0;
 				}
-				return true;
 			}
 		}
 		return false;
