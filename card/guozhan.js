@@ -1225,9 +1225,6 @@ game.import("card", function () {
 						}
 						return target == next || target.inline(next);
 					}
-					if (player == target) {
-						return false;
-					}
 					if (
 						game.hasPlayer(function (current) {
 							return current.isLinked() && current != player;

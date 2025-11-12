@@ -108,51 +108,58 @@ export const chooseCharacterContent = async (event, _trigger, _player) => {
 			const name2 = result.buttons[1].link;
 			const characterChosen = [name1, name2];
 
-			/** @type {Partial<Result>?} */
-			let result2 = null;
+			// @ts-expect-error 祖宗之法就是这么写的
+			delete game.me.trueIdentity;
+			// @ts-expect-error 祖宗之法就是这么写的
+			delete game.me.pendingTrueIdentity;
 
 			// @ts-expect-error 祖宗之法就是这么写的
 			if (get.is.double(name1, true)) {
 				// @ts-expect-error 祖宗之法就是这么写的
 				if (!get.is.double(name2, true)) {
-					result2 = { control: lib.character[name2][1] };
+					// @ts-expect-error 祖宗之法就是这么写的
+					game.me.trueIdentity = lib.character[name2][1];
 				}
 				// 仙人之兮列如麻
 				// @ts-expect-error 祖宗之法就是这么写的
 				else if (get.is.double(name1, true).removeArray(get.is.double(name2, true)).length == 0 || get.is.double(name2, true).removeArray(get.is.double(name1, true)).length == 0) {
-					const next = game.me
-						// @ts-expect-error 祖宗之法就是这么写的
-						.chooseControl(get.is.double(name2, true).filter(group => get.is.double(name1, true).includes(group)));
-
-					next.set("prompt", "请选择你代表的势力");
 					// @ts-expect-error 祖宗之法就是这么写的
-					next.set("ai", () => _status.event.controls.randomGet());
-
-					result2 = await next.forResult();
-				} else {
-					result2 = {
+					const intersection = get.is.double(name2, true).filter(group => get.is.double(name1, true).includes(group));
+					if (intersection.length == 1) {
 						// @ts-expect-error 祖宗之法就是这么写的
-						control: get.is.double(name1, true).find(group => get.is.double(name2, true).includes(group)),
-					};
+						game.me.trueIdentity = intersection[0];
+					} else {
+						// @ts-expect-error 祖宗之法就是这么写的
+						game.me.pendingTrueIdentity = {
+							prompt: "请选择你代表的势力",
+							choices: intersection.slice(0),
+						};
+					}
+				} else {
+					// @ts-expect-error 祖宗之法就是这么写的
+					const intersection = get.is.double(name1, true).filter(group => get.is.double(name2, true).includes(group));
+					if (intersection.length) {
+						// @ts-expect-error 祖宗之法就是这么写的
+						game.me.trueIdentity = intersection[0];
+					}
 				}
 			}
 			// @ts-expect-error 祖宗之法就是这么写的
 			else if (lib.character[name1][1] == "ye" && get.is.double(name2, true)) {
-				const next = game.me
+				// @ts-expect-error 祖宗之法就是这么写的
+				const viceGroups = get.is.double(name2, true).slice(0);
+				if (viceGroups.length == 1) {
 					// @ts-expect-error 祖宗之法就是这么写的
-					.chooseControl(get.is.double(name2, true));
-
-				next.set("prompt", "请选择副将代表的势力");
-				// @ts-expect-error 祖宗之法就是这么写的
-				next.set("ai", () => _status.event.controls.randomGet());
-
-				result2 = await next.forResult();
+					game.me.trueIdentity = viceGroups[0];
+				} else if (viceGroups.length) {
+					// @ts-expect-error 祖宗之法就是这么写的
+					game.me.pendingTrueIdentity = {
+						prompt: "请选择副将代表的势力",
+						choices: viceGroups,
+					};
+				}
 			}
 
-			if (result2?.control) {
-				// @ts-expect-error 祖宗之法就是这么写的
-				game.me.trueIdentity = result2.control;
-			}
 			if (characterChosen) {
 				game.me.init(characterChosen[0], characterChosen[1], false, void 0);
 				game.addRecentCharacter(characterChosen[0], characterChosen[1]);
@@ -548,7 +555,7 @@ export const chooseCharacterContent = async (event, _trigger, _player) => {
 		// @ts-expect-error 祖宗之法就是这么写的
 		delete _status.createControl;
 	}
-}
+};
 
 /**
  * @param {GameEvent} event
@@ -605,8 +612,7 @@ export const chooseCharacterOLContent = async (event, _trigger, _player) => {
 	const chooseCharacterResult = await next.forResult();
 
 	let sort = true;
-	const chosen = [];
-	const chosenCharacter = [];
+	const pendingIdentityMap = {};
 
 	for (const i in chooseCharacterResult) {
 		if (chooseCharacterResult[i] && chooseCharacterResult[i].links) {
@@ -637,6 +643,10 @@ export const chooseCharacterOLContent = async (event, _trigger, _player) => {
 		const name1 = chooseCharacterResult[i][0];
 		const name2 = chooseCharacterResult[i][1];
 		// @ts-expect-error 祖宗之法就是这么写的
+		delete lib.playerOL[i].trueIdentity;
+		// @ts-expect-error 祖宗之法就是这么写的
+		delete lib.playerOL[i].pendingTrueIdentity;
+		// @ts-expect-error 祖宗之法就是这么写的
 		if (get.is.double(name1, true)) {
 			// @ts-expect-error 祖宗之法就是这么写的
 			if (!get.is.double(name2, true)) {
@@ -644,66 +654,49 @@ export const chooseCharacterOLContent = async (event, _trigger, _player) => {
 				lib.playerOL[i].trueIdentity = lib.character[name2][1];
 				// @ts-expect-error 祖宗之法就是这么写的
 			} else if (get.is.double(name1, true).removeArray(get.is.double(name2, true)).length == 0 || get.is.double(name2, true).removeArray(get.is.double(name1, true)).length == 0) {
-				chosen.push(lib.playerOL[i]);
-				chosenCharacter.push([name1, name2]);
+				// @ts-expect-error 祖宗之法就是这么写的
+				const intersection = get.is.double(name2, true).filter(group => get.is.double(name1, true).includes(group));
+				if (intersection.length == 1) {
+					// @ts-expect-error 祖宗之法就是这么写的
+					lib.playerOL[i].trueIdentity = intersection[0];
+				} else if (intersection.length) {
+					const pending = {
+						prompt: "请选择你代表的势力",
+						choices: intersection.slice(0),
+					};
+					// @ts-expect-error 祖宗之法就是这么写的
+					lib.playerOL[i].pendingTrueIdentity = pending;
+					pendingIdentityMap[i] = pending;
+				}
 			} else {
 				// @ts-expect-error 祖宗之法就是这么写的
-				lib.playerOL[i].trueIdentity = get.is.double(name1, true).find(group => get.is.double(name2, true).includes(group));
+				const intersection = get.is.double(name1, true).filter(group => get.is.double(name2, true).includes(group));
+				if (intersection.length) {
+					// @ts-expect-error 祖宗之法就是这么写的
+					lib.playerOL[i].trueIdentity = intersection[0];
+				}
 			}
 			// @ts-expect-error 祖宗之法就是这么写的
 		} else if (lib.character[name1][1] == "ye" && get.is.double(name2, true)) {
-			chosen.push(lib.playerOL[i]);
-			chosenCharacter.push([name1, name2]);
-		}
-	}
-
-	let chooseGroupResult = {};
-	if (chosen.length) {
-		for (let i = 0; i < chosen.length; ++i) {
-			const name1 = chosenCharacter[i][0];
-			const name2 = chosenCharacter[i][1];
-			let str;
-			let choice;
 			// @ts-expect-error 祖宗之法就是这么写的
-			if (get.is.double(name1, true)) {
-				str = "请选择你代表的势力";
+			const viceGroups = get.is.double(name2, true).slice(0);
+			if (viceGroups.length == 1) {
 				// @ts-expect-error 祖宗之法就是这么写的
-				choice = get.is.double(name2, true).filter(group => get.is.double(name1, true).includes(group));
-			}
-			if (lib.character[name1][1] == "ye") {
-				str = "请选择你的副将代表的势力";
-				// @ts-expect-error 祖宗之法就是这么写的
-				choice = get.is.double(name2, true);
-			}
-			chosen[i] = [chosen[i], [str, [choice.map(i => ["", "", "group_" + i]), "vcard"]], 1, true];
-		}
-
-		chooseGroupResult = await game.me
-			.chooseButtonOL(
-				chosen,
-				function (player, result) {
-					if (player == game.me) {
-						player.trueIdentity = result.links[0][2].slice(6);
-					}
-				},
-				void 0
-			)
-			.set("switchToAuto", () => {
-				// @ts-expect-error 祖宗之法就是这么写的
-				_status.event.result = "ai";
-			})
-			.set("processAI", () => {
-				return {
-					bool: true,
-					// @ts-expect-error 祖宗之法就是这么写的
-					links: [_status.event.dialog.buttons.randomGet().link],
+				lib.playerOL[i].trueIdentity = viceGroups[0];
+			} else if (viceGroups.length) {
+				const pending = {
+					prompt: "请选择你的副将代表的势力",
+					choices: viceGroups,
 				};
-			})
-			.forResult();
+				// @ts-expect-error 祖宗之法就是这么写的
+				lib.playerOL[i].pendingTrueIdentity = pending;
+				pendingIdentityMap[i] = pending;
+			}
+		}
 	}
 
 	broadcastAll(
-		(result, result2, delay) => {
+		(result, pendingMap, delay) => {
 			for (const current of game.players) {
 				const id = current.playerid;
 				// @ts-expect-error 祖宗之法就是这么写的
@@ -712,9 +705,9 @@ export const chooseCharacterOLContent = async (event, _trigger, _player) => {
 					current.init(result[id][0], result[id][1], false);
 				}
 				// @ts-expect-error 祖宗之法就是这么写的
-				if (result2[id] && result2[id].length) {
+				if (pendingMap[id]) {
 					// @ts-expect-error 祖宗之法就是这么写的
-					current.trueIdentity = result2[id][0][2].slice(6);
+					current.pendingTrueIdentity = pendingMap[id];
 				}
 				if (current != game.me) {
 					// @ts-expect-error 祖宗之法就是这么写的
@@ -750,7 +743,7 @@ export const chooseCharacterOLContent = async (event, _trigger, _player) => {
 			});
 		},
 		chooseCharacterResult,
-		chooseGroupResult,
+		pendingIdentityMap,
 		delay
 	);
 
@@ -880,7 +873,7 @@ export const chooseCharacterOLContent = async (event, _trigger, _player) => {
 			}
 		}
 	}
-}
+};
 
 /**
  * @param {GameEvent} event
@@ -1080,7 +1073,7 @@ export const showYexingsContent = async (event, _trigger, player) => {
 		game.checkResult();
 		break;
 	}
-}
+};
 
 /**
  * @param {GameEvent} event
@@ -1162,7 +1155,7 @@ export const hideCharacter = async (event, _trigger, player) => {
 	}
 
 	player.checkConflict();
-}
+};
 
 /**
  * @param {GameEvent} event
@@ -1214,7 +1207,7 @@ export const chooseJunlingFor = async (event, _trigger, player) => {
 	}
 
 	Reflect.set(event, "result", result);
-}
+};
 
 /**
  * @param {GameEvent} event
@@ -1260,7 +1253,7 @@ export const chooseJunlingControl = async (event, _trigger, player) => {
 		control: result.control,
 	};
 	Reflect.set(event, "result", result2);
-}
+};
 
 /**
  * @param {GameEvent & { junling: string }} event
@@ -1346,7 +1339,7 @@ export const carryOutJunling = async (event, _trigger, player) => {
 			player.discard(cards);
 		}
 	}
-}
+};
 
 /**
  * @param {GameEvent} _event
@@ -1357,7 +1350,7 @@ export const doubleDraw = async (_event, _trigger, player) => {
 	if (!player.hasMark("yinyang_mark")) {
 		player.addMark("yinyang_mark", 1);
 	}
-}
+};
 
 /**
  * @param {GameEvent & { hidden: boolean }} event
@@ -1423,7 +1416,7 @@ export const changeViceOnline = async (event, _trigger, player) => {
 			await player.hideCharacter(1, false);
 		}
 	}
-}
+};
 
 export const changeVice = [
 	async (event, _trigger, player) => {
@@ -1550,7 +1543,7 @@ export const mayChangeVice = async (event, _trigger, player) => {
 		// @ts-expect-error 祖宗之法就是这么做的
 		await player.changeVice(event.hidden);
 	}
-}
+};
 
 /**
  *
@@ -1563,7 +1556,7 @@ export const zhulian = async (_event, _trigger, player) => {
 	if (!player.hasMark("zhulianbihe_mark")) {
 		player.addMark("zhulianbihe_mark", 1);
 	}
-}
+};
 
 export default {
 	hideCharacter,

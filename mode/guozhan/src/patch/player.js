@@ -1,11 +1,18 @@
 import { lib, game, ui, get, ai, _status } from "../../../../noname.js";
 import { GameEvent, Dialog, Player } from "../../../../noname/library/element/index.js";
 
+const originalShowCharacter = Player.prototype.showCharacter;
+
 export class PlayerGuozhan extends Player {
 	/**
 	 * @type {string}
 	 */
 	trueIdentity;
+
+	/**
+	 * @type {{ prompt: string; choices: string[] } | undefined}
+	 */
+	pendingTrueIdentity;
 
 	/**
 	 * 获取玩家的势力
@@ -270,7 +277,7 @@ export class PlayerGuozhan extends Player {
 					);
 				}
 			} else if (that.identity != source.identity) {
-				source.draw(get.population(that.identity) + 1);
+				source.draw(game.players.filter(current => current.identity == this.identity && !current.isOut()).length + 1);
 			} else {
 				source.discard(source.getCards("he"));
 			}
@@ -420,31 +427,31 @@ export class PlayerGuozhan extends Player {
 		if (!info) {
 			return;
 		}
-		let tonglings=game.getTongling(this.identity);
-		if(tonglings.length){
-			if(tonglings.length==1){
+		let tonglings = game.getTongling(this.identity);
+		if (tonglings.length) {
+			if (tonglings.length == 1) {
 				var to = tonglings[0];
-				game.log(this, "移除了" + (num ? "副将" : "主将"), "#b" + name,"，变为","#b" + to);
+				game.log(this, "移除了" + (num ? "副将" : "主将"), "#b" + name, "，变为", "#b" + to);
 				this.reinit(name, to, false);
 				this.showCharacter(num, false);
 				// @ts-expect-error 类型就是这么写的
 				_status.characterlist.add(name);
-				game.useTongling(this.identity,to);
-			}else{
+				game.useTongling(this.identity, to);
+			} else {
 				let next = this.chooseButton(true, ["选择要变更的武将牌", [tonglings, "character"]]);
 				next.ai = function (button) {
 					return get.guozhanRank(button.link);
 				};
 				let result = await next.forResult();
 				var to = result.links[0];
-				game.log(this, "移除了" + (num ? "副将" : "主将"), "#b" + name,"，变为","#b" + to);
+				game.log(this, "移除了" + (num ? "副将" : "主将"), "#b" + name, "，变为", "#b" + to);
 				this.reinit(name, to, false);
 				this.showCharacter(num, false);
 				// @ts-expect-error 类型就是这么写的
 				_status.characterlist.add(name);
-				game.useTongling(this.identity,to);
+				game.useTongling(this.identity, to);
 			}
-		}else{
+		} else {
 			var to = "gz_shibing" + (info[0] == "male" ? 1 : 2) + "key";
 			game.log(this, "移除了" + (num ? "副将" : "主将"), "#b" + name);
 			if (!lib.character[to]) {
@@ -475,6 +482,76 @@ export class PlayerGuozhan extends Player {
 	}
 	hasViceCharacter() {
 		return this.name2.indexOf("gz_shibing") != 0 && !lib.character[this.name2].isShibing;
+	}
+	showCharacter(num, log) {
+		if (this.pendingTrueIdentity && !this.trueIdentity && this.isUnseen(2) && this.pendingTrueIdentity.choices && this.pendingTrueIdentity.choices.length) {
+			const next = game.createEvent("guozhanChooseTrueIdentity");
+			// @ts-expect-error 类型就是这么写的
+			next.player = this;
+			next.num = num;
+			next.log = log;
+			next.setContent(async function () {
+				// @ts-expect-error 类型就是这么写的
+				const event = _status.event;
+				/** @type {PlayerGuozhan} */
+				// @ts-expect-error 类型就是这么写的
+				const player = event.player;
+				const pending = player.pendingTrueIdentity;
+				if (!pending || !pending.choices || !pending.choices.length) {
+					Player.prototype.showCharacter.call(player, event.num, event.log);
+					return;
+				}
+				let choice = null;
+				if (player == game.me && !_status.auto) {
+					const select = player
+						// @ts-expect-error 类型就是这么写的
+						.chooseControl(pending.choices);
+					select.set("prompt", pending.prompt || "请选择你代表的势力");
+					// @ts-expect-error 类型就是这么写的
+					select.set("ai", () => _status.event.controls.randomGet());
+					const result = await select.forResult();
+					if (result?.control) {
+						choice = result.control;
+					}
+				}
+				if (!choice) {
+					// @ts-expect-error 类型就是这么写的
+					const choices = pending.choices.slice();
+					if (choices.length == 1) {
+						choice = choices[0];
+					} else {
+						const preferMajority = Math.random() < 0.75;
+						if (preferMajority) {
+							const safeChoices = choices.filter(group => player.wontYe(group));
+							const evaluationPool = safeChoices.length ? safeChoices : choices;
+							let maxPopulation = -Infinity;
+							/** @type {string[]} */
+							let bestChoices = [];
+							evaluationPool.forEach(group => {
+								const population = get.population(group);
+								if (population > maxPopulation) {
+									maxPopulation = population;
+									bestChoices = [group];
+								} else if (population === maxPopulation) {
+									bestChoices.push(group);
+								}
+							});
+							if (bestChoices.length) {
+								choice = bestChoices.randomGet();
+							}
+						}
+						if (!choice) {
+							choice = choices.randomGet();
+						}
+					}
+				}
+				player.trueIdentity = choice;
+				player.pendingTrueIdentity = void 0;
+				originalShowCharacter.call(player, event.num, event.log);
+			});
+			return next;
+		}
+		return originalShowCharacter.call(this, num, log);
 	}
 	$showCharacter(num, log) {
 		var showYe = false;
@@ -841,8 +918,7 @@ export class PlayerGuozhan extends Player {
 					if (targets.length == 1) {
 						// @ts-expect-error 类型就是这么写的
 						this.ai.shown += 0.2 * c;
-					}
-					else {
+					} else {
 						// @ts-expect-error 类型就是这么写的
 						this.ai.shown += 0.1 * c;
 					}
@@ -858,11 +934,11 @@ export class PlayerGuozhan extends Player {
 			this.ai.shown = -0.5;
 		}
 	}
-	hasShibing(){
-		if(this.name1.startsWith("gz_shibing") || lib.character[this.name1].isShibing){
+	hasShibing() {
+		if (this.name1.startsWith("gz_shibing") || lib.character[this.name1].isShibing) {
 			return 1;
 		}
-		if(this.name2.startsWith("gz_shibing") || lib.character[this.name2].isShibing){
+		if (this.name2.startsWith("gz_shibing") || lib.character[this.name2].isShibing) {
 			return 2;
 		}
 		return 0;

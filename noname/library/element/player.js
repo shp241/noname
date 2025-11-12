@@ -11852,13 +11852,22 @@ export class Player extends HTMLDivElement {
 				return false;
 			}
 			var list = game.filterPlayer(function (current) {
-				return current.identity != "unknown" && current.hasSkillTag("forceMajor");
+				return current.identity != "unknown" && !current.isOut() && current.hasSkillTag("forceMajor");
 			});
 			if (list.length) {
+				var friendCount = 0;
 				for (var i of list) {
 					if (i.isFriendOf(this)) {
-						return true;
+						friendCount++;
 					}
+				}
+				if (friendCount > 0) {
+					var allFriends = game.filterPlayer(
+						function (current) {
+							return current.identity != "unknown" && !current.isOut() && current.isFriendOf(this);
+						}.bind(this)
+					);
+					return allFriends.length >= 2;
 				}
 				return false;
 			}
@@ -11867,6 +11876,9 @@ export class Player extends HTMLDivElement {
 				pmap = _status.connectMode ? lib.playerOL : game.playerMap,
 				player;
 			for (var i of game.players) {
+				if (i.isOut && i.isOut()) {
+					continue;
+				}
 				if (i.identity == "unknown") {
 					continue;
 				}
@@ -11900,22 +11912,37 @@ export class Player extends HTMLDivElement {
 			return true;
 		} else {
 			var list = game.filterPlayer(function (current) {
-				return current.hasSkillTag("forceMajor");
+				return !current.isOut() && current.hasSkillTag("forceMajor");
 			});
 			if (list.length) {
+				var sameGroupCount = 0;
 				for (var i of list) {
 					if (i.group == this.group) {
-						return true;
+						sameGroupCount++;
 					}
+				}
+				if (sameGroupCount > 0) {
+					var allSameGroup = game.filterPlayer(
+						function (current) {
+							return !current.isOut() && current.group == this.group;
+						}.bind(this)
+					);
+					return allSameGroup.length >= 2;
 				}
 				return false;
 			}
 			var map = {};
 			for (var i of game.players) {
+				if (i.isOut && i.isOut()) {
+					continue;
+				}
 				if (!map[i.group]) {
 					map[i.group] = [];
 				}
 				map[i.group].push(i);
+			}
+			if (!map[this.group] || map[this.group].length < 2) {
+				return false;
 			}
 			for (var i in map) {
 				if (map[i].length > map[this.group].length) {
@@ -11927,7 +11954,11 @@ export class Player extends HTMLDivElement {
 	}
 	isNotMajor() {
 		for (var i = 0; i < game.players.length; i++) {
-			if (game.players[i].isMajor()) {
+			var current = game.players[i];
+			if (current.isOut && current.isOut()) {
+				continue;
+			}
+			if (current.isMajor()) {
 				return !this.isMajor();
 			}
 		}
@@ -11946,38 +11977,6 @@ export class Player extends HTMLDivElement {
 			) {
 				return false;
 			}
-			var map = {},
-				sides = [],
-				pmap = _status.connectMode ? lib.playerOL : game.playerMap,
-				player;
-			for (var i of game.players) {
-				if (i.identity == "unknown") {
-					continue;
-				}
-				var added = false;
-				for (var j of sides) {
-					if (i.isFriendOf(pmap[j])) {
-						added = true;
-						map[j].push(i);
-						if (i == this) {
-							player = j;
-						}
-						break;
-					}
-				}
-				if (!added) {
-					map[i.playerid] = [i];
-					sides.push(i.playerid);
-					if (i == this) {
-						player = i.playerid;
-					}
-				}
-			}
-			for (var i in map) {
-				if (map[i].length < map[player].length) {
-					return false;
-				}
-			}
 			return true;
 		} else {
 			if (!nomajor && this.isMajor()) {
@@ -11990,18 +11989,6 @@ export class Player extends HTMLDivElement {
 				})
 			) {
 				return false;
-			}
-			var map = {};
-			for (var i of game.players) {
-				if (!map[i.group]) {
-					map[i.group] = [];
-				}
-				map[i.group].push(i);
-			}
-			for (var i in map) {
-				if (map[i].length < map[this.group].length) {
-					return false;
-				}
 			}
 			return true;
 		}
