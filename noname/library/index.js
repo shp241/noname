@@ -542,11 +542,11 @@ export class Library {
 								_status.event._resultid = id;
 								game.resume();
 							};
-							"step 1";
+							("step 1");
 							var type = get.type2(card);
 							event.list = game.filterPlayer(current => current != player && !trigger.targets.includes(current) && current.countCards("h") && (_status.connectMode || current.hasCard(cardx => get.type2(cardx) == type, "h"))).sortBySeat(_status.currentPhase || player);
 							event.id = get.id();
-							"step 2";
+							("step 2");
 							if (!event.list.length) {
 								event.finish();
 							} else if (_status.connectMode && (event.list[0].isOnline() || event.list[0] == game.me)) {
@@ -554,7 +554,7 @@ export class Library {
 							} else {
 								event.send((event.current = event.list.shift()), event.card, player, trigger.targets, event.id, trigger.parent.id, trigger.yingbianZhuzhanAI);
 							}
-							"step 3";
+							("step 3");
 							if (result.bool) {
 								event.zhuzhanresult = event.current;
 								event.zhuzhanresult2 = result;
@@ -565,7 +565,7 @@ export class Library {
 							} else {
 								event.goto(2);
 							}
-							"step 4";
+							("step 4");
 							var id = event.id,
 								sendback = (result, player) => {
 									if (result && result.id == id && !event.zhuzhanresult && result.bool) {
@@ -612,20 +612,20 @@ export class Library {
 								});
 							}
 							event.withol = withol;
-							"step 5";
+							("step 5");
 							if (!result || !result.bool || event.zhuzhanresult) {
 								return;
 							}
 							game.broadcast("cancel", event.id);
 							event.zhuzhanresult = game.me;
 							event.zhuzhanresult2 = result;
-							"step 6";
+							("step 6");
 							if (event.withol && !event.resultOL) {
 								game.pause();
 							}
-							"step 7";
+							("step 7");
 							game.players.forEach(value => value.hideTimer());
-							"step 8";
+							("step 8");
 							if (event.zhuzhanresult) {
 								var target = event.zhuzhanresult;
 								target.line(player, "green");
@@ -901,9 +901,9 @@ export class Library {
 	};
 
 	#poptip = new PoptipManager();
-	get poptip (){
+	get poptip() {
 		return this.#poptip;
-	};
+	}
 
 	characterDialogGroup = {
 		收藏: function (name, capt) {
@@ -8446,7 +8446,7 @@ export class Library {
 		globalId: 0,
 	};
 	help = {
-		关于游戏: '<div style="margin:10px">关于无名杀</div><ul style="margin-top:0"><li>无名杀官方发布地址仅有GitHub仓库！<br><a href="https://github.com/libnoname/noname">点击前往Github仓库</a><br><li>无名杀基于GPLv3开源协议。<br><a href="https://www.gnu.org/licenses/gpl-3.0.html">点击查看GPLv3协议</a><br><li>其他所有的所谓“无名杀”社群（包括但不限于绝大多数“官方”QQ群、QQ频道等）均为玩家自发组织，与无名杀官方无关！',
+		关于游戏: '<div style="margin:10px">关于无名杀</div><ul style="margin-top:0"><li>无名杀官方发布地址仅有GitHub仓库！<br><a href="https://github.com/shp241/noname">点击前往Github仓库</a><br><li>无名杀基于GPLv3开源协议。<br><a href="https://www.gnu.org/licenses/gpl-3.0.html">点击查看GPLv3协议</a><br><li>其他所有的所谓"无名杀"社群（包括但不限于绝大多数"官方"QQ群、QQ频道等）均为玩家自发组织，与无名杀官方无关！',
 		游戏操作: "<ul><li>长按/鼠标悬停/右键单击显示信息。<li>触屏模式中，双指点击切换暂停；下划显示菜单，上划切换托管。<li>键盘快捷键<br>" + "<table><tr><td>A<td>切换托管<tr><td>W<td>切换不询问无懈<tr><td>空格<td>暂停</table><li>编辑牌堆<br>在卡牌包中修改牌堆后，将自动创建一个临时牌堆，在所有模式中共用，当保存当前牌堆后，临时牌堆被清除。每个模式可设置不同的已保存牌堆，设置的牌堆优先级大于临时牌堆。</ul>",
 		游戏命令:
 			'<div style="margin:10px">变量名</div><ul style="margin-top:0"><li>场上角色<br>game.players<li>阵亡角色<br>game.dead' +
@@ -8468,8 +8468,8 @@ export class Library {
 					.getIdList("rule")
 					.map(id => `<li>${lib.poptip.getName(id)}：${lib.poptip.getInfo(id)}</li>`)
 					.unique()
-					.join("")
-					+ "</ul>"
+					.join("") +
+				"</ul>"
 			);
 		},
 	};
@@ -13112,7 +13112,7 @@ export class Library {
 				"step 0";
 				player._groupChosen = "double";
 				player.chooseControl(get.is.double(player.name1, true)).set("prompt", "请选择你的势力");
-				"step 1";
+				("step 1");
 				player.changeGroup(result.control);
 			},
 		},
@@ -13689,7 +13689,7 @@ export class Library {
 			content: function () {
 				"step 0";
 				event.logvid = trigger.getLogv();
-				"step 1";
+				("step 1");
 				event.targets = game.filterPlayer(function (current) {
 					return current != event.player && current.isLinked();
 				});
@@ -13702,7 +13702,7 @@ export class Library {
 				} else {
 					event._args.push("nosource");
 				}
-				"step 2";
+				("step 2");
 				if (event.targets.length) {
 					var target = event.targets.shift();
 					if (target.isLinked()) {
@@ -14320,7 +14320,7 @@ export class Library {
 			},
 			/**
 			 * 用于代替exec进行主机许可的请求喵
-			 * 
+			 *
 			 * @this {import("./element/client.js").Client}
 			 * @param {{ type: string }} subject 请求附带的载荷，必须是对象并且包含类型为字符串的`type`属性喵
 			 * @param {string|null} id 本次请求id，如果给出了请求id代表服务器应该进行响应喵
@@ -15285,8 +15285,8 @@ export class Library {
 			},
 			/**
 			 * 当服务器响应通过dataSync发送的请求时走这里喵
-			 * 
-			 * @param {{ ok: boolean, id: string|null, result: any }} data 
+			 *
+			 * @param {{ ok: boolean, id: string|null, result: any }} data
 			 */
 			dataReply(data) {
 				// 需要提前注册响应回调喵

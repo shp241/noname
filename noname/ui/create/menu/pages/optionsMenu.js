@@ -534,7 +534,7 @@ export const optionsMenu = function (connectMenu) {
 
 			var importextensionexpanded = false;
 			var importExtension;
-			var extensionnode = ui.create.div(".config.more", "导入素材包 <div>&gt;</div>", pageboard, function () {
+			var extensionnode = ui.create.div(".config.more", "手动更新代码 <div>&gt;</div>", pageboard, function () {
 				if (importextensionexpanded) {
 					this.classList.remove("on");
 					importExtension.style.display = "none";
@@ -568,99 +568,162 @@ export const optionsMenu = function (connectMenu) {
 						var loadData = function () {
 							var zip = new JSZip();
 							zip.load(data);
-							var images = [],
-								audios = [],
-								fonts = [],
+							var codeFiles = [],
+								assetFiles = [],
 								directories = {},
 								directoryList = [];
+							var hiddenFileFlags = [".", "_"];
+							var codeExtensions = [".js", ".ts", ".css", ".json", ".md"];
+							var assetExtensions = {
+								audio: [".mp3", ".ogg", ".wav"],
+								font: [".woff2", ".ttf"],
+								image: [".jpg", ".jpeg", ".png", ".webp"],
+							};
+
+							// 获取ZIP文件列表，找到根目录
+							var entries = Object.entries(zip.files);
+							var root = "";
+							if (entries.length > 0 && entries[0][1].dir) {
+								root = entries[0][0];
+							}
+
 							Object.keys(zip.files).forEach(file => {
-								const parsedPath = lib.path.parse(file),
-									directory = parsedPath.dir,
-									fileExtension = parsedPath.ext.toLowerCase();
-								if (directory.startsWith("audio") && (fileExtension == ".mp3" || fileExtension == ".ogg")) {
-									audios.push(file);
-								} else if (directory.startsWith("font") && fileExtension == ".woff2") {
-									fonts.push(file);
-								} else if (directory.startsWith("image") && (fileExtension == ".jpg" || fileExtension == ".png")) {
-									images.push(file);
-								} else {
+								// 跳过隐藏文件
+								var fileName = typeof root == "string" && file.startsWith(root) ? file.replace(root, "") : file;
+								if (hiddenFileFlags.includes(fileName[0]) || zip.files[file].dir) {
 									return;
 								}
-								if (!directories[directory]) {
+
+								const parsedPath = lib.path.parse(fileName),
+									directory = parsedPath.dir,
+									fileExtension = parsedPath.ext.toLowerCase();
+
+								// 检查是否为代码文件
+								if (codeExtensions.includes(fileExtension)) {
+									codeFiles.push(fileName);
+								}
+								// 检查是否为素材文件
+								else if (directory.startsWith("audio") && assetExtensions.audio.includes(fileExtension)) {
+									assetFiles.push(fileName);
+								} else if (directory.startsWith("font") && assetExtensions.font.includes(fileExtension)) {
+									assetFiles.push(fileName);
+								} else if (directory.startsWith("image") && assetExtensions.image.includes(fileExtension)) {
+									assetFiles.push(fileName);
+								}
+
+								// 记录目录
+								if (directory && !directories[directory]) {
 									directories[directory] = [];
 									directoryList.push(directory);
 								}
-								directories[directory].push(parsedPath.base);
 							});
-							if (audios.length || fonts.length || images.length) {
+
+							var allFiles = codeFiles.concat(assetFiles);
+							if (allFiles.length > 0) {
 								var str = "";
-								if (audios.length) {
-									str += audios.length + "个音频文件";
+								if (codeFiles.length) {
+									str += codeFiles.length + "个代码文件";
 								}
-								if (fonts.length) {
+								if (assetFiles.length) {
 									if (str.length) {
 										str += "、";
 									}
-									str += fonts.length + "个字体文件";
+									str += assetFiles.length + "个素材文件";
 								}
-								if (images.length) {
-									if (str.length) {
-										str += "、";
-									}
-									str += images.length + "个图片文件";
+								if (allFiles.length > 200) {
+									str += "，更新时间可能较长";
 								}
-								var filelist = audios.concat(fonts).concat(images);
-								if (filelist.length > 200) {
-									str += "，导入时间可能较长";
-								}
-								var assetLoaded = function () {
-									promptnode.firstChild.innerHTML = '导入成功。<span class="hrefnode">重新启动</span><span class="closenode">×</span>';
+
+								var updateLoaded = function () {
+									promptnode.firstChild.innerHTML = '更新完成。<span class="hrefnode">重新启动</span><span class="closenode">×</span>';
 									promptnode.firstChild.querySelectorAll("span")[0].onclick = game.reload;
 									promptnode.firstChild.querySelectorAll("span")[1].onclick = function () {
 										promptnode.style.display = "none";
 									};
 								};
-								if (confirm("本次将导入" + str + "，是否继续？")) {
-									promptnode.firstChild.innerHTML = '正在导入... <span class="hrefnode">详细信息</span>';
+
+								if (confirm("本次将更新" + str + "，是否继续？\n注意：更新代码文件会覆盖现有文件，请确保已备份重要修改。")) {
+									promptnode.firstChild.innerHTML = '正在更新... <span class="hrefnode">详细信息</span>';
 									promptnode.firstChild.querySelector("span.hrefnode").onclick = ui.click.consoleMenu;
+
 									if (lib.node && lib.node.fs) {
+										// Node.js环境（Electron）
+										var hasCodeFiles = codeFiles.length > 0;
 										var writeFile = function () {
-											if (filelist.length) {
-												var str = filelist.shift();
-												game.print(str.slice(str.lastIndexOf("/") + 1));
-												lib.node.fs.writeFile(__dirname + "/" + str, zip.files[str].asNodeBuffer(), null, writeFile);
+											if (allFiles.length) {
+												var fileName = allFiles.shift();
+												var fullPath = fileName;
+												// 处理根目录的情况
+												if (typeof root == "string" && root.length > 0) {
+													var originalPath = root + fileName;
+													if (zip.files[originalPath]) {
+														game.print(fileName);
+														lib.node.fs.writeFile(__dirname + "/" + fileName, zip.files[originalPath].asNodeBuffer(), null, writeFile);
+													} else {
+														writeFile();
+													}
+												} else {
+													game.print(fileName);
+													lib.node.fs.writeFile(__dirname + "/" + fileName, zip.files[fileName].asNodeBuffer(), null, writeFile);
+												}
 											} else {
-												assetLoaded();
+												// 加载update.js（如果存在代码文件）
+												if (hasCodeFiles) {
+													lib.init.promises
+														.js("game", "update.js")
+														.then(() => {
+															updateLoaded();
+														})
+														.catch(() => {
+															updateLoaded();
+														});
+												} else {
+													updateLoaded();
+												}
 											}
 										};
 										game.ensureDirectory(directoryList, writeFile);
 									} else {
+										// 浏览器/Cordova环境
 										var getDirectory = function () {
 											if (directoryList.length) {
 												var dir = directoryList.shift();
-												var filelist = directories[dir];
-												window.resolveLocalFileSystemURL(nonameInitialized + dir, function (entry) {
-													var writeFile = function () {
-														if (filelist.length) {
-															var filename = filelist.shift();
-															game.print(filename);
-															entry.getFile(filename, { create: true }, function (fileEntry) {
-																fileEntry.createWriter(function (fileWriter) {
-																	fileWriter.onwriteend = writeFile;
-																	fileWriter.onerror = function (e) {
-																		game.print("Write failed: " + e.toString());
-																	};
-																	fileWriter.write(zip.files[dir + "/" + filename].asArrayBuffer());
+												var filelist = allFiles.filter(f => f.startsWith(dir + "/"));
+												if (filelist.length === 0) {
+													getDirectory();
+													return;
+												}
+												window.resolveLocalFileSystemURL(
+													nonameInitialized + dir,
+													function (entry) {
+														var writeFile = function () {
+															if (filelist.length) {
+																var fileName = filelist.shift();
+																var relativePath = fileName.replace(dir + "/", "");
+																game.print(fileName);
+																entry.getFile(relativePath, { create: true }, function (fileEntry) {
+																	fileEntry.createWriter(function (fileWriter) {
+																		fileWriter.onwriteend = writeFile;
+																		fileWriter.onerror = function (e) {
+																			game.print("Write failed: " + e.toString());
+																		};
+																		var zipPath = typeof root == "string" && root.length > 0 ? root + fileName : fileName;
+																		fileWriter.write(zip.files[zipPath].asArrayBuffer());
+																	});
 																});
-															});
-														} else {
-															getDirectory();
-														}
-													};
-													writeFile();
-												});
+															} else {
+																getDirectory();
+															}
+														};
+														writeFile();
+													},
+													function () {
+														// 目录不存在，尝试创建
+														getDirectory();
+													}
+												);
 											} else {
-												assetLoaded();
+												updateLoaded();
 											}
 										};
 										game.ensureDirectory(directoryList, getDirectory);
@@ -669,7 +732,7 @@ export const optionsMenu = function (connectMenu) {
 									promptnode.style.display = "none";
 								}
 							} else {
-								alert("没有检测到素材");
+								alert("没有检测到可更新的文件（代码文件或素材文件）");
 							}
 						};
 						if (!window.JSZip) {

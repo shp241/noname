@@ -2,7 +2,7 @@ import { menuContainer, menuxpages, menuUpdates, openMenu, clickToggle, clickSwi
 import { ui, game, get, ai, lib, _status } from "../../../../../noname.js";
 import { parseSize, checkVersion, getRepoTagDescription, request, createProgress, getLatestVersionFromGitHub, getTreesFromGithub } from "../../../../library/update.js";
 import { createApp } from "../../../../../game/vue.esm-browser.js";
-import security from "../../../../util/security.js"
+import security from "../../../../util/security.js";
 import dedent from "../../../../../game/dedent.js";
 
 export const otherMenu = function (/** @type { boolean | undefined } */ connectMenu) {
@@ -341,10 +341,12 @@ export const otherMenu = function (/** @type { boolean | undefined } */ connectM
 						});
 				} else {
 					if (confirm("将要直接下载dev版本的完整包，是否继续?")) {
+						const owner = lib.config.update_repo_owner || "shp241";
+						const repo = lib.config.update_repo_name || "noname";
 						download({
 							name: "noname-PR-Branch",
 							assets: [],
-							zipball_url: "https://ghproxy.cc/https://github.com/libnoname/noname/archive/PR-Branch.zip",
+							zipball_url: `https://ghproxy.cc/https://github.com/${owner}/${repo}/archive/PR-Branch.zip`,
 						});
 					} else {
 						refresh();
@@ -568,7 +570,7 @@ export const otherMenu = function (/** @type { boolean | undefined } */ connectM
 			updatepx.style.whiteSpace = "nowrap";
 			updatepx.style.marginTop = "8px";
 			var buttonx = ui.create.node("button", "访问项目主页", function () {
-				window.open("https://github.com/libnoname/noname");
+				window.open("https://github.com/shp241/noname");
 			});
 			updatepx.appendChild(buttonx);
 			ui.updateUpdate = function () {
