@@ -1051,10 +1051,7 @@ game.import("card", function () {
 							}
 							return "选项一";
 						}
-						if (player.hasSkillTag("maixie_hp") || player.hp <= 2) {
-							return "选项一";
-						}
-						return Math.random() < 0.5 ? "选项一" : "选项二";
+						return "选项一";
 					}
 				},
 				content() {

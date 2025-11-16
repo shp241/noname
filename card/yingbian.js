@@ -506,7 +506,7 @@ game.import("card", function () {
 				trigger: { player: "yingbian" },
 				equipSkill: true,
 				forced: true,
-				filter: (event, player) => get.is.yingbianConditional(event.card) && player.getHistory("useCard", evt => get.is.yingbianConditional(evt.card)).length < 2,
+				filter: (event, player) => get.is.yingbianConditional(event.card),
 				content: () => {
 					trigger.forceYingbian = true;
 				},

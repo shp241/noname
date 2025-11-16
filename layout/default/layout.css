@@ -2929,11 +2929,15 @@ div.select-all:not(.card):not(.player) {
 }
 
 .identitycircle > div > div[data-color="qun"] {
-	background-image: radial-gradient(circle at bottom left, rgb(255, 218, 71), rgb(224, 191, 62));
+	background-image: radial-gradient(circle at bottom left, rgb(164, 164, 164), rgb(160, 160, 160));
 }
 
 .identitycircle > div > div[data-color="jin"] {
 	background-image: radial-gradient(circle at bottom left, rgb(100, 74, 139), rgb(96, 72, 136));
+}
+
+.identitycircle > div > div[data-color="han"] {
+	background-image: radial-gradient(circle at bottom left, rgb(255, 218, 71), rgb(224, 191, 62));
 }
 
 .identitycircle > div > div[data-color="key"] {
@@ -4018,7 +4022,6 @@ span[data-nature="firemx"] {
 }
 
 .player .identity[data-color="zhong"],
-.player .identity[data-color="qun"],
 .player .identity[data-color="neutral"],
 .player .identity[data-color="friend2"],
 div[data-nature="zhong"],
@@ -4088,6 +4091,8 @@ div[data-nature="devilmm"],
 span[data-nature="devilmm"] {
 	text-shadow: rgb(155, 34, 52) 0 0 2px, rgb(155, 34, 52) 0 0 2px, rgb(155, 34, 52) 0 0 2px, rgb(155, 34, 52) 0 0 2px, black 0 0 1px;
 }
+
+.player .identity[data-color="qun"],
 div[data-nature="qun"],
 span[data-nature="qun"] {
 	text-shadow: rgba(164, 164, 164, 1) 0 0 2px, rgba(164, 164, 164, 1) 0 0 5px, rgba(164, 164, 164, 1) 0 0 10px, rgba(164, 164, 164, 1) 0 0 10px, rgba(164, 164, 164, 1) 0 0 20px, rgba(164, 164, 164, 1) 0 0 20px, black 0 0 1px;

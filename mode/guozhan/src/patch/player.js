@@ -712,6 +712,13 @@ export class PlayerGuozhan extends Player {
 			}
 			if (!this.isUnseen(2) && !this._mingzhied) {
 				this._mingzhied = true;
+				// 处理额外的阴阳鱼（平均体力 > 4 时）
+				if (this.extraYinyangyu && this.extraYinyangyu > 0) {
+					for (var i = 0; i < this.extraYinyangyu; i++) {
+						this.doubleDraw();
+					}
+				}
+				// 处理 0.5 血的阴阳鱼（平均体力 <= 4 时）
 				if (this.singleHp) {
 					this.doubleDraw();
 				}

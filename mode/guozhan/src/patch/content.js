@@ -1347,9 +1347,7 @@ export const carryOutJunling = async (event, _trigger, player) => {
  * @param {Player} player
  */
 export const doubleDraw = async (_event, _trigger, player) => {
-	if (!player.hasMark("yinyang_mark")) {
-		player.addMark("yinyang_mark", 1);
-	}
+	player.addMark("yinyang_mark", 1);
 };
 
 /**

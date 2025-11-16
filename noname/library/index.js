@@ -709,6 +709,7 @@ export class Library {
 			[
 				"wushicishu",
 				() => {
+					trigger.addCount = false;
 					player.getStat().card.sha--;
 				},
 			],
@@ -11421,9 +11422,37 @@ export class Library {
 			num = game.checkMod(card, player, num, "cardUsable", player);
 			if (typeof num != "number") {
 				return true;
-			} else {
-				return player.countUsed(card) < num;
 			}
+			if (player.countUsed(card) < num) {
+				return true;
+			}
+			// 检查是否有 yingbian_wushicishu tag 且满足对应的应变条件
+			if (get.cardtag(card, "yingbian_wushicishu")) {
+				var yingbianConditionSatisfied = false;
+				// 检查简单条件
+				var simpleConditions = get.simpleYingbianConditions(card);
+				// 创建一个包含 player 属性的对象用于检查应变条件
+				var checkEvent = event || _status.event;
+				if (!checkEvent.player) {
+					checkEvent = Object.assign({}, checkEvent, { player: player });
+				}
+				for (var i = 0; i < simpleConditions.length; i++) {
+					var conditionKey = simpleConditions[i];
+					var conditionFunc = lib.yingbian.condition.simple.get(conditionKey);
+					if (conditionFunc && conditionFunc(checkEvent)) {
+						yingbianConditionSatisfied = true;
+						break;
+					}
+				}
+				// 检查强制应变
+				if (!yingbianConditionSatisfied && (get.cardtag(card, "yingbian_force") || player.hasSkillTag("forceYingbian"))) {
+					yingbianConditionSatisfied = true;
+				}
+				if (yingbianConditionSatisfied) {
+					return true;
+				}
+			}
+			return false;
 		},
 		cardUsable(card, player, event) {
 			card = get.autoViewAs(card);
@@ -11454,6 +11483,32 @@ export class Library {
 			}
 			if (player.countUsed(card) < num) {
 				return true;
+			}
+			// 检查是否有 yingbian_wushicishu tag 且满足对应的应变条件
+			if (get.cardtag(card, "yingbian_wushicishu")) {
+				var yingbianConditionSatisfied = false;
+				// 检查简单条件
+				var simpleConditions = get.simpleYingbianConditions(card);
+				// 创建一个包含 player 属性的对象用于检查应变条件
+				var checkEvent = event;
+				if (!checkEvent.player) {
+					checkEvent = Object.assign({}, event, { player: player });
+				}
+				for (var i = 0; i < simpleConditions.length; i++) {
+					var conditionKey = simpleConditions[i];
+					var conditionFunc = lib.yingbian.condition.simple.get(conditionKey);
+					if (conditionFunc && conditionFunc(checkEvent)) {
+						yingbianConditionSatisfied = true;
+						break;
+					}
+				}
+				// 检查强制应变
+				if (!yingbianConditionSatisfied && (get.cardtag(card, "yingbian_force") || player.hasSkillTag("forceYingbian"))) {
+					yingbianConditionSatisfied = true;
+				}
+				if (yingbianConditionSatisfied) {
+					return true;
+				}
 			}
 			if (
 				game.hasPlayer2(function (current) {
@@ -16222,6 +16277,7 @@ export class Library {
 		shu: "soil",
 		wu: "wood",
 		qun: "qun",
+		han: "han",
 		western: "thunder",
 		key: "key",
 		jin: "thunder",

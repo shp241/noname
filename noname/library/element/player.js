@@ -3024,9 +3024,24 @@ export class Player extends HTMLDivElement {
 			}
 			switch (double_hp) {
 				case "pingjun": {
-					this.maxHp = Math.floor((maxHp1 + maxHp2) / 2);
-					this.hp = Math.floor((hp1 + hp2) / 2);
-					this.singleHp = (maxHp1 + maxHp2) % 2 === 1;
+					var avgMaxHp = (maxHp1 + maxHp2) / 2;
+					var avgHp = (hp1 + hp2) / 2;
+					var hasHalf = (maxHp1 + maxHp2) % 2 === 1;
+
+					// 如果平均后体力值 > 4，则视为 4，并计算多出的部分
+					if (avgMaxHp > 4) {
+						var excess = avgMaxHp - 4;
+						// 每多出 1 体力，多拿两个阴阳鱼
+						this.extraYinyangyu = Math.floor(excess * 2);
+						this.maxHp = 4;
+						this.hp = Math.min(4, Math.floor(avgHp));
+						this.singleHp = false;
+					} else {
+						this.maxHp = Math.floor(avgMaxHp);
+						this.hp = Math.floor(avgHp);
+						this.singleHp = hasHalf;
+						this.extraYinyangyu = 0;
+					}
 					break;
 				}
 				case "zuidazhi": {
@@ -3586,6 +3601,7 @@ export class Player extends HTMLDivElement {
 
 		if (this.name2) {
 			delete this.singleHp;
+			delete this.extraYinyangyu;
 			delete this.name2;
 		}
 
