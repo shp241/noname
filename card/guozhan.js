@@ -2234,6 +2234,9 @@ game.import("card", function () {
 			diaohulishan: {
 				charlotte: true,
 				group: "undist",
+				filterTarget(card, player, target) {
+					return target != _status.currentPhase;
+				},
 				init(player) {
 					if (player.isIn()) {
 						game.broadcastAll(function (player) {

@@ -18182,9 +18182,10 @@ export default {
 		},
 	},
 	xianqu_mark: {
-		intro: { content: "◇出牌阶段，你可以弃置此标记，观看一名其他角色的一张武将牌，然后将手牌摸至四张。" },
+		intro: { content: "◇出牌阶段，你可以弃置此标记，将手牌摸至四张，然后观看一名其他角色的一张武将牌。" },
 		async content(event, trigger, player) {
 			player.removeMark(player.hasMark("xianqu_mark") ? "xianqu_mark" : "yexinjia_mark", 1);
+			await player.drawTo(4);
 			if (
 				game.hasPlayer(current => {
 					return current != player && current.isUnseen(2);
@@ -18228,7 +18229,6 @@ export default {
 					player.removeSkill("xianqu_mark");
 				}
 			}
-			await player.drawTo(4);
 		},
 	},
 	zhulianbihe_mark: {
