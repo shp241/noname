@@ -240,6 +240,24 @@ export class GameGuozhan extends Game {
 	}
 
 	/**
+	 * 获取装备对应的君主装备列表
+	 *
+	 * @returns {List} - 势力名，普通装备，君主装备
+	 */
+	getJunEquip(){
+		let list = [
+			[["wei"],["heart",13,"zhuahuang"],["heart",13,"liulongcanjia"]],
+			[["shu"],["spade",2,"cixiong"],["spade",2,"feilongduofeng"]],
+			[["wu"],["diamond",6,"wuliu"],["diamond",6,"dinglanyemingzhu"]],
+			[["qun"],["heart", 3, "jingfanma", null, ["lianheng"]],["heart", 3,"taipingyaoshu"]],
+			[["jin"],["spade",5,"jueying"],["spade",5,"linxiaoyuyu"]],
+			[["han"],null,["heart",9,"chixiaojian"]],
+			[["han"],["club",1,"yuxi"],["club",1,"yuxi"]]
+		];
+		return list;
+	}
+
+	/**
 	 * 获取某名玩家可能的势力列表
 	 *
 	 * @param {Player} player - 玩家

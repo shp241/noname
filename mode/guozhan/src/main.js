@@ -15,6 +15,35 @@ function getRandomGroups(groups, banNumber) {
   return shuffled.slice(0, banNumber);
 }
 
+function addJunEquipToPile() {
+	if (!Array.isArray(lib.card.list)) {
+		return;
+	}
+	const getJunEquip = typeof game.getJunEquip === "function" ? game.getJunEquip : null;
+	if (!getJunEquip) {
+		return;
+	}
+	const junEquipList = getJunEquip.call(game);
+	if (!Array.isArray(junEquipList)) {
+		return;
+	}
+	const rawJunzhuConfig = _status.connectMode ? (lib.configOL && lib.configOL.junzhu) : get.config("junzhu");
+	const junzhuEnabled = !!rawJunzhuConfig;
+	const bannedGroups = _status.bannedGroups || [];
+	for (const entry of junEquipList) {
+		if (!entry || entry.length < 3) {
+			continue;
+		}
+		const [groups, normalEquip, junEquip] = entry;
+		const groupList = Array.isArray(groups) ? groups : [];
+		const allGroupsBanned = groupList.length ? groupList.every(group => bannedGroups.includes(group)) : false;
+		const equipToAdd = junzhuEnabled && !allGroupsBanned ? junEquip : normalEquip;
+		if (Array.isArray(equipToAdd)) {
+			lib.card.list.push(equipToAdd.slice(0));
+		}
+	}
+}
+
 /**
  * @type {ContentFuncByAll}
  */
@@ -93,6 +122,8 @@ export const start = async (event, trigger, player) => {
 				break;
 		}
 
+		addJunEquipToPile();
+
 		// @ts-expect-error 祖宗之法就是这么写的
 		game.fixedPile = true;
 
@@ -158,9 +189,9 @@ export const start = async (event, trigger, player) => {
 		let mode = get.config("guozhan_mode");
 		_status.mode = mode;
 
-		// 如果当前模式不在可选列表中，则默认为normal
+		// 如果当前模式不在可选列表中，则默认为yingbian
 		if (!["normal", "yingbian", "old", "free"].includes(mode)) {
-			_status.mode = mode = "normal";
+			_status.mode = mode = "yingbian";
 		}
 
 		// 决定当前模式下的牌堆
@@ -202,6 +233,7 @@ export const start = async (event, trigger, player) => {
 				lib.card.list = lib.guozhanPile.slice(0);
 				break;
 		}
+		
 
 		if (_status.mode != "free") {
 			// @ts-expect-error 祖宗之法就是这么写的
@@ -393,6 +425,8 @@ export const start = async (event, trigger, player) => {
 				await game.delay(5);
         game.broadcastAll("closeDialog", videoId);
     }
+
+		addJunEquipToPile();
 
 		if (_status.brawl && _status.brawl.chooseCharacterBefore) {
 			await _status.brawl.chooseCharacterBefore();

@@ -433,10 +433,33 @@ game.import("card", function () {
 				nopower: true,
 				//unique:true,
 				distance: {
-					globalFrom: -1,
-					globalTo: +1,
+					globalFrom: -1*(()=>{
+						let count = 0;
+						game.players.forEach(current => {
+							if(current.isFriendOf(game.player)){
+								if (current.getCards("e", { subtype: ["equip6"] }).length > 0) {
+									count++;
+								}else if (current.getCards("e", { subtype: ["equip3", "equip4"] }).length > 0) {
+									count++;
+								}
+							}
+						});
+						return count;
+					})(),
+					globalTo: (()=>{
+						let count = 0;
+						game.players.forEach(current => {
+							if(current.isFriendOf(game.player)){
+								if (current.getCards("e", { subtype: ["equip6"] }).length > 0) {
+									count++;
+								}else if (current.getCards("e", { subtype: ["equip3", "equip4"] }).length > 0) {
+									count++;
+								}
+							}
+						});
+						return count;
+					})(),
 				},
-				skills: ["liulongcanjia"],
 				ai: {
 					equipValue(card, player) {
 						if (player.countCards("e", { subtype: ["equip3", "equip4"] }) > 1) {
@@ -1537,6 +1560,25 @@ game.import("card", function () {
 				subtype: "equip4",
 				distance: { globalFrom: -1 },
 			},
+			chixiaojian: {
+				fullskin: true,
+				type: "equip",
+				subtype: "equip1",
+				distance: { attackFrom: -2 },
+				ai: {
+					basic: {
+						equipValue: 5,
+					},
+				},
+				skills: ["chixiaojian_skill"],
+			},
+			linxiaoyuyu: {
+				fullskin: true,
+				type: "equip",
+				subtype: "equip4",
+				distance: { globalFrom: -1 },
+				skills: ["linxiaoyuyu_skill"],
+			},
 		},
 		skill: {
 			zhaoshu_skill: {
@@ -1687,16 +1729,6 @@ game.import("card", function () {
 					order: 1,
 					result: {
 						player: 1,
-					},
-				},
-			},
-			liulongcanjia: {
-				equipSkill: true,
-				mod: {
-					canBeReplaced(card, player) {
-						if (player.getVEquips("liulongcanjia").includes(card)) {
-							return false;
-						}
 					},
 				},
 			},
@@ -2424,10 +2456,85 @@ game.import("card", function () {
 					},
 				},
 			},
+			linxiaoyuyu_skill: {
+				audio: true,
+				trigger: { player: "equipAfter" },
+				forced: true,
+				equipSkill: true,
+				getIndex(event, player) {
+					return event.vcards.filter(card => card.name === "tianjitu").length;
+				},
+				filter: (event, player) => {
+					_status.currentPhase.isDamaged();
+				},
+				content: () => {
+					_status.currentPhase.recover();
+				},
+				subSkill: {
+					lose: {
+						audio: "tianjitu_skill",
+						forced: true,
+						charlotte: true,
+						equipSkill: true,
+						trigger: {
+							player: "loseAfter",
+							global: ["equipAfter", "addJudgeAfter", "gainAfter", "loseAsyncAfter", "addToExpansionAfter"],
+						},
+						filter: true,
+						getIndex(event, player) {
+							const evt = event.getl(player);
+							const lostCards = [];
+							evt.es.forEach(card => {
+								const VEquip = evt.vcard_map.get(card);
+								if (VEquip.name === "linxiaoyuyu") {
+									lostCards.add(VEquip);
+								}
+							});
+							return lostCards.length;
+						},
+						content() {
+							_status.currentPhase.draw();
+						},
+					},
+				},
+			},
+			chixiaojian_skill: {
+				equipSkill: true,
+				forced:true,
+				trigger: { player: "useCardToPlayered" },
+				logTarget: "target",
+				filter(event, player) {
+					return event.card.name == "sha" && (event.player.isMajor() && event.target.isMinor() || event.target.isMajor() && event.player.isMinor());
+				},
+				async content(_event, trigger, player) {
+					const result2 = await trigger.target
+						.chooseCard("请交给" + get.translation(player) + "一张红色牌，否则不能使用闪抵消此杀", "h", function (card) {
+							// @ts-expect-error 类型系统未来可期
+							return get.color(card) == red;
+						})
+						.set("ai", card => {
+							const num = get.event().num;
+							if (num == 0) {
+								return 0;
+							}
+							if (card.name == "shan") {
+								return num > 1 ? 2 : 0;
+							}
+							return 8 - get.value(card);
+						})
+						.forResult();
+					if (!result2.bool) {
+						// @ts-expect-error 类型系统未来可期
+						trigger.getParent().directHit.add(trigger.target);
+					}else{
+						await trigger.target.give(result2.cards,player)
+					}
+				},
+			},
 		},
 		translate: {
 			liulongcanjia: "六龙骖驾",
-			liulongcanjia_info: "锁定技。此牌占用1个进攻坐骑和1个防御坐骑槽位，且不可被替换。你计算与其他角色的距离-1，其他角色计算与你的距离+1。",
+			liulongcanjia_info: "锁定技。此牌占用1个进攻坐骑和1个防御坐骑槽位。你计算与其他角色的距离-X，其他角色计算与你的距离+X。（X为与你势力相同的角色装备区的坐骑数）",
 			minguangkai: "明光铠",
 			minguangkai_cancel: "明光铠",
 			minguangkai_link: "明光铠",
@@ -2492,6 +2599,10 @@ game.import("card", function () {
 			jingfanma_bg: "-马",
 			jingfanma: "惊帆",
 			jingfanma_info: "锁定技，你计算与其他角色的距离-1。",
+			chixiaojian: "赤霄剑",
+			chixiaojian_info: "锁定技，你使用【杀】指定一个目标后，若你与其势力大小不同，其需交给你一张红色手牌，否则其不能抵消此【杀】。",
+			linxiaoyuyu: "临筱玉舆",
+			linxiaoyuyu_info: "锁定技，你计算与其他角色的距离-1。此牌置入一个装备区后，当前回合角色回复1点体力；此牌离开一个装备区后，当前回合角色摸一张牌。",
 			huxinjing_bg: "镜",
 			huxinjing: "护心镜",
 			huxinjing_info: "此牌可对其他角色使用。当你受到伤害时，若伤害值大于1或大于等于你的体力值，则你可以将所有【护心镜】置入弃牌堆，然后防止此伤害。",
