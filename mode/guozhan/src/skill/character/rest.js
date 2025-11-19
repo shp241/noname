@@ -21120,32 +21120,47 @@ export default {
 				const result = await player
 					.chooseControl("bumingzhi", "明置" + get.translation(player.name1), "明置" + get.translation(player.name2), "tongshimingzhi", true)
 					.set("ai", (event, player) => {
-						if (player.hasSkillTag("mingzhi_yes")) {
-							return get.rand(1, 2);
-						}
+						const skillsMain = game.expandSkills(lib.character[player.name1]?.[3] || []);
+						const skillsVice = game.expandSkills(lib.character[player.name2]?.[3] || []);
+						const hasTagOn = (list, tag) => list.some(skill => lib.skill[skill]?.ai?.[tag]);
+						const noOnMain = hasTagOn(skillsMain, "mingzhi_no");
+						const noOnVice = hasTagOn(skillsVice, "mingzhi_no");
+						const yesOnMain = hasTagOn(skillsMain, "mingzhi_yes");
+						const yesOnVice = hasTagOn(skillsVice, "mingzhi_yes");
 						if (player.hasSkillTag("mingzhi_no")) {
+							if (noOnMain && player.isUnseen(1)) {
+								return Math.random() < 0.5 ? 2 : 0;
+							}
+							if (noOnVice && player.isUnseen(0)) {
+								return Math.random() < 0.5 ? 1 : 0;
+							}
 							return 0;
 						}
+						if (player.hasSkillTag("mingzhi_yes")) {
+							if (yesOnMain && player.isUnseen(0)) {
+								return Math.random() < 0.5 ? 1 : 3;
+							}
+							if (yesOnVice && player.isUnseen(1)) {
+								return Math.random() < 0.5 ? 2 : 3;
+							}
+							return get.rand(1, 2);
+						}
+						const revealed = game.countPlayer(current => current.identity != "unknown");
+						if (!revealed) {
+							return Math.random() < 0.85 ? (Math.random() < 0.5 ? 3 : Math.random() < 0.5 ? 2 : 1) : 0;
+						}
 						var popu = get.population(lib.character[player.name1][1]);
-						if (popu >= 2 || (popu == 1 && game.players.length <= 4)) {
+						const maxPopulation = Math.max(...lib.group.map(group => get.population(group)));
+						if (popu > 2 || (popu == 1 && game.players.length <= 4)) {
 							return Math.random() < 0.5 ? 3 : Math.random() < 0.5 ? 2 : 1;
 						}
 						if (choice == 0) {
 							return 0;
 						}
-						if (get.population(group) > 0 && player.wontYe()) {
+						if (popu == maxPopulation) {
 							return Math.random() < 0.2 ? (Math.random() < 0.5 ? 3 : Math.random() < 0.5 ? 2 : 1) : 0;
 						}
-						var nming = 0;
-						for (var i = 0; i < game.players.length; i++) {
-							if (game.players[i] != player && game.players[i].identity != "unknown") {
-								nming++;
-							}
-						}
-						if (nming == game.players.length - 1) {
-							return Math.random() < 0.5 ? (Math.random() < 0.5 ? 3 : Math.random() < 0.5 ? 2 : 1) : 0;
-						}
-						return Math.random() < (0.1 * nming) / game.players.length ? (Math.random() < 0.5 ? 3 : Math.random() < 0.5 ? 2 : 1) : 0;
+						return Math.random() < 0.75 / game.players.length ? (Math.random() < 0.5 ? 3 : Math.random() < 0.5 ? 2 : 1) : 0;
 					})
 					.forResult();
 				control = result.control;

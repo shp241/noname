@@ -656,7 +656,7 @@ export class Library {
 				["kongchao", event => !event.player.countCards("h")],
 				["fujia", event => event.player.isMaxHandcard()],
 				["canqu", event => event.player.getHp() == 1],
-				["gujun", event => !game.hasPlayer(current => current != event.player && current.isFriendOf(event.player))],
+				["gujun", event => event.player.identity != "unknown" && !game.hasPlayer(current => current != event.player && current.isFriendOf(event.player))],
 			]),
 		},
 		effect: new Map([
@@ -701,7 +701,7 @@ export class Library {
 				"gainsha",
 				() => {
 					const cardx = trigger.respondTo;
-					if (cardx && cardx[1] && cardx[1].cards && cardx[1].cards.filterInD("od").length) {
+					if (cardx && cardx[1] && get.name(cardx[1]) == "sha" && cardx[1].cards && cardx[1].cards.filterInD("od").length) {
 						player.gain(cardx[1].cards.filterInD("od"), "gain2");
 					}
 				},
