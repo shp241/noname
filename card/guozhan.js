@@ -884,7 +884,7 @@ game.import("card", function () {
 						if (get.mode() == "versus") {
 							return current.isFriendOf(target);
 						}
-						return current.isMajor() == target.isMajor() && current != target && !current.hasSkill("diaohulishan");
+						return current.isMajor() == target.isMajor() && current != target && current.isIn();
 					}, targets);
 				},
 				content() {
@@ -1243,7 +1243,7 @@ game.import("card", function () {
 						if (!next) {
 							return false;
 						}
-						return target == next || target.inline(next);
+						return target == next;
 					}
 					if (
 						game.hasPlayer(function (current) {
@@ -1273,8 +1273,14 @@ game.import("card", function () {
 					}
 				},
 				enable: true,
-				selectTarget: -1,
-				modTarget: true,
+				changeTarget(player, targets) {
+					var target = targets[0];
+					game.filterPlayer(function (current) {
+						return target.inline(current);
+					}, targets);
+				},
+				// selectTarget: -1,
+				// modTarget: true,
 				content() {
 					target.damage("fire");
 				},
