@@ -14,7 +14,7 @@ if (process.argv[2]) {
 	if (/[0-9]/.test(process.argv[2][0])) {
 		newversion = true;
 		updates.update = updates.version;
-		updates.version = "1.10." + process.argv[2];
+		updates.version = "2.0" + process.argv[2] + "-QJ";
 		commit = updates.version;
 	} else {
 		commit = process.argv[2];
@@ -34,15 +34,8 @@ var get = function (dir, callback) {
 					var url = dir + "/" + filename;
 					var stat = fs.statSync(url);
 					if (stat.isFile()) {
-						if (
-							[".jpg", ".png", ".mp3", ".ttf"].indexOf(
-								path.extname(url)
-							) != -1
-						) {
-							var assetentry = path.relative(
-								path.dirname(__dirname),
-								url
-							);
+						if ([".jpg", ".png", ".mp3", ".ttf"].indexOf(path.extname(url)) != -1) {
+							var assetentry = path.relative(path.dirname(__dirname), url).replace(/\\/g, "/");
 							assetlist += ",\n\t'" + assetentry + "'";
 							entrylist.push(assetentry);
 						}
@@ -53,10 +46,7 @@ var get = function (dir, callback) {
 								for (var i = 0; i < list.length; i++) {
 									var url2 = url + "/" + list[i];
 									var stat = fs.statSync(url2);
-									if (
-										stat.isFile() &&
-										path.extname(url2) == ".jpg"
-									) {
+									if (stat.isFile() && path.extname(url2) == ".jpg") {
 										num++;
 									}
 								}
@@ -84,21 +74,21 @@ var get = function (dir, callback) {
 
 get(path.dirname(__dirname), function () {
 	var diff = false;
-	if (window.noname_asset_list.length == entrylist.length + 1) {
+	if (window.noname_asset_list && window.noname_asset_list.length == entrylist.length + 1) {
 		for (var i = 0; i < entrylist.length; i++) {
 			if (entrylist[i] != window.noname_asset_list[i + 1]) {
 				diff = true;
 				break;
 			}
 		}
-		if (!diff) {
+		if (!diff && window.noname_skin_list) {
 			for (var i in entrymap) {
 				if (window.noname_skin_list[i] !== entrymap[i]) {
 					diff = true;
 					break;
 				}
 			}
-			for (var i in noname_skin_list) {
+			for (var i in window.noname_skin_list) {
 				if (window.noname_skin_list[i] !== entrymap[i]) {
 					diff = true;
 					break;
@@ -110,8 +100,7 @@ get(path.dirname(__dirname), function () {
 	}
 	var next = function () {
 		exec("git diff --name-only", (error, stdout, stderr) => {
-			var updatelist =
-				"window.noname_update={\n\tversion:'" + updates.version + "',";
+			var updatelist = "window.noname_update={\n\tversion:'" + updates.version + "',";
 			updatelist += "\n\tupdate:'" + (updates.update || "") + "',";
 			var apply = function (name, list) {
 				updatelist += "\n\t" + name + ":[\n";
@@ -139,11 +128,7 @@ get(path.dirname(__dirname), function () {
 			var changes = stdout.split("\n");
 			for (var i = 0; i < changes.length; i++) {
 				var extname = path.extname(changes[i]);
-				if (
-					!changes[i] ||
-					(extname != ".js" && extname != ".css") ||
-					changes[i] == "game/update.js"
-				) {
+				if (!changes[i] || (extname != ".js" && extname != ".css") || changes[i] == "game/update.js") {
 					changes.splice(i--, 1);
 				}
 			}
@@ -159,41 +144,30 @@ get(path.dirname(__dirname), function () {
 				}
 			}
 			files.sort(function (a, b) {
-				if (a > b) {return 1;}
-				if (a < b) {return -1;}
+				if (a > b) {
+					return 1;
+				}
+				if (a < b) {
+					return -1;
+				}
 				return 0;
 			});
 			apply("files", files);
-			fs.writeFile(
-				"game/update.js",
-				updatelist + "\n};",
-				"utf-8",
-				function () {
-					console.log("updated update.js");
-					if (commit && typeof commit === "string") {
-						exec("git add . && git commit -am " + commit);
-						console.log("committed " + commit);
-					}
+			fs.writeFile("game/update.js", updatelist + "\n};", "utf-8", function () {
+				console.log("updated update.js");
+				if (commit && typeof commit === "string") {
+					exec("git add . && git commit -am " + commit);
+					console.log("committed " + commit);
 				}
-			);
+			});
 		});
 	};
 	if (diff) {
-		var assetversion =
-			"window.noname_asset_list=[\n\t'" + updates.version + "'";
-		fs.writeFile(
-			"game/asset.js",
-			assetversion +
-				assetlist +
-				"\n];\n" +
-				skinlist.slice(0, skinlist.length - 2) +
-				"\n};",
-			"utf-8",
-			function () {
-				console.log("udpated asset.js");
-				next();
-			}
-		);
+		var assetversion = "window.noname_asset_list=[\n\t'" + updates.version + "'";
+		fs.writeFile("game/asset.js", assetversion + assetlist + "\n];\n" + skinlist.slice(0, skinlist.length - 2) + "\n};", "utf-8", function () {
+			console.log("udpated asset.js");
+			next();
+		});
 	} else {
 		next();
 	}
