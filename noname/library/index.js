@@ -1468,7 +1468,6 @@ export class Library {
 					async onclick(bool) {
 						await game.promises.saveConfig("extension_auto_import", bool);
 					},
-					unfrequent: true,
 				},
 				experimental_enable: {
 					name: "启用实验性功能",

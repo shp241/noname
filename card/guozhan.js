@@ -511,7 +511,7 @@ game.import("card", function () {
 						if (player.hasSkill("jubao")) {
 							return 8;
 						}
-						if (player.hasSkill("gz_zhiheng")) {
+						if (player.hasSkill("gz_zhiheng") || player.hasSkill("qj_zhiheng")) {
 							return 6;
 						}
 						if (
@@ -1559,6 +1559,21 @@ game.import("card", function () {
 				subtype: "equip4",
 				distance: { globalFrom: -1 },
 				skills: ["linxiaoyuyu_skill"],
+				onLose() {
+					player.addTempSkill("linxiaoyuyu_skill_lose");
+				},
+				loseDelay: false,
+				ai: {
+					value(card, player) {
+						return 8;
+					},
+					equipValue(card, player) {
+						if(player.isDamaged()){
+							return 8;
+						}
+						return 4;
+					},
+				},
 			},
 		},
 		skill: {
@@ -1760,7 +1775,7 @@ game.import("card", function () {
 				equipSkill: true,
 				inherit: "zhiheng",
 				filter(event, player) {
-					return !player.hasSkill("gz_zhiheng", true);
+					return !player.hasSkill("gz_zhiheng", true) && !player.hasSkill("qj_zhiheng", true);
 				},
 				selectCard() {
 					var player = _status.event.player;
@@ -2443,17 +2458,16 @@ game.import("card", function () {
 				forced: true,
 				equipSkill: true,
 				getIndex(event, player) {
-					return event.vcards.filter(card => card.name === "tianjitu").length;
+					return event.vcards.filter(card => card.name === "linxiaoyuyu").length;
 				},
-				filter: (event, player) => {
-					_status.currentPhase.isDamaged();
+				filter(event, player){
+					return _status.currentPhase.isDamaged();
 				},
-				content: () => {
+				content() {
 					_status.currentPhase.recover();
 				},
 				subSkill: {
 					lose: {
-						audio: "tianjitu_skill",
 						forced: true,
 						charlotte: true,
 						equipSkill: true,
@@ -2461,7 +2475,9 @@ game.import("card", function () {
 							player: "loseAfter",
 							global: ["equipAfter", "addJudgeAfter", "gainAfter", "loseAsyncAfter", "addToExpansionAfter"],
 						},
-						filter: true,
+						filter(event, player){
+							return true;
+						},
 						getIndex(event, player) {
 							const evt = event.getl(player);
 							const lostCards = [];
@@ -2485,7 +2501,7 @@ game.import("card", function () {
 				trigger: { player: "useCardToPlayered" },
 				logTarget: "target",
 				filter(event, player) {
-					return event.card.name == "sha" && (event.player.isMajor() && event.target.isMinor() || event.target.isMajor() && event.player.isMinor());
+					return event.card.name == "sha" && (player.isMajor() && event.target.isMinor() || event.target.isMajor() && player.isMinor());
 				},
 				async content(_event, trigger, player) {
 					const result2 = await trigger.target
@@ -2508,7 +2524,7 @@ game.import("card", function () {
 						// @ts-expect-error 类型系统未来可期
 						trigger.getParent().directHit.add(trigger.target);
 					}else{
-						await trigger.target.give(result2.cards,player)
+						await trigger.target.give(result2.cards, player)
 					}
 				},
 			},
