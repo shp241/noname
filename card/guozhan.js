@@ -1192,13 +1192,10 @@ game.import("card", function () {
 				cardcolor: "club",
 				skills: ["huxinjing"],
 				filterTarget(card, player, target) {
-					if (get.mode() == "guozhan" && player != target) {
-						return false;
-					}
 					return target.canEquip(card, true);
 				},
 				selectTarget() {
-					return get.mode() == "guozhan" ? -1 : 1;
+					return 1;
 				},
 				toself: false,
 				ai: {
@@ -2287,7 +2284,7 @@ game.import("card", function () {
 				trigger: { player: "damageBegin4" },
 				// forced:true,
 				filter(event, player) {
-					if (event.num < player.hp && (get.mode() == "guozhan" || event.num <= 1)) {
+					if (event.num < player.hp && event.num <= 1) {
 						return false;
 					}
 					let cards = player.getEquips("huxinjing");
@@ -2603,7 +2600,6 @@ game.import("card", function () {
 			huxinjing_bg: "镜",
 			huxinjing: "护心镜",
 			huxinjing_info: "此牌可对其他角色使用。当你受到伤害时，若伤害值大于1或大于等于你的体力值，则你可以将所有【护心镜】置入弃牌堆，然后防止此伤害。",
-			huxinjing_info_guozhan: "当你受到伤害时，若伤害值大于等于你的体力值，则你可以将所有【护心镜】置入弃牌堆，然后防止此伤害。",
 			gz_haolingtianxia: "号令天下",
 			gz_haolingtianxia_info: "出牌阶段，对一名体力值不为全场最少的角色使用。所有其他角色依次可以选择一项：①弃置一张牌（魏势力角色无需弃牌），视为对目标角色使用一张【杀】；②弃置目标角色的一张牌（魏势力角色改为获得其一张牌）。",
 			gz_kefuzhongyuan: "克复中原",
