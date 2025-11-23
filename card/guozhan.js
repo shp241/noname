@@ -2504,7 +2504,7 @@ game.import("card", function () {
 					const result2 = await trigger.target
 						.chooseCard("请交给" + get.translation(player) + "一张红色牌，否则不能使用闪抵消此杀", "h", function (card) {
 							// @ts-expect-error 类型系统未来可期
-							return get.color(card) == red;
+							return get.color(card) == "red";
 						})
 						.set("ai", card => {
 							const num = get.event().num;
