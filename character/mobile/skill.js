@@ -20403,8 +20403,7 @@ const skills = {
 				}
 				ui.clear();
 			} else {
-				var card1 = result.player;
-				var card2 = result.target;
+
 				if (get.position(card1) == "d") {
 					trigger.target.gain(card1, "gain2");
 				}

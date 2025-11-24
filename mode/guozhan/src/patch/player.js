@@ -459,7 +459,7 @@ export class PlayerGuozhan extends Player {
 				lib.translate[to] = `${get.translation(info[1])}兵`;
 			}
 			this.reinit(name, to, false);
-			this.showCharacter(num, false);
+			// this.showCharacter(num, false);
 			// @ts-expect-error 类型就是这么写的
 			_status.characterlist.add(name);
 		}

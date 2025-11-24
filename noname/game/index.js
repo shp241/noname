@@ -9208,6 +9208,9 @@ export class Game extends GameCompatible {
 			skills.sort((a, b) => get.priority(a) - get.priority(b));
 		}
 		const arg = argumentArray.slice(0, -2);
+		if(!skills || !skills.length){
+			return;
+		}
 		skills.forEach(value => {
 			var mod = get.info(value).mod[name];
 			if (!mod) {

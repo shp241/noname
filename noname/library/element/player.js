@@ -3029,7 +3029,7 @@ export class Player extends HTMLDivElement {
 					var hasHalf = (maxHp1 + maxHp2) % 2 === 1;
 
 					// 如果平均后体力值 > 4，则视为 4，并计算多出的部分
-					if (avgMaxHp > 4) {
+					if (avgMaxHp >= 5) {
 						var excess = avgMaxHp - 4;
 						// 每多出 1 体力，多拿两个阴阳鱼
 						this.extraYinyangyu = Math.floor(excess * 2);
