@@ -4247,6 +4247,15 @@ span[data-nature="icemx"] {
 	text-shadow: black 0 0 1px, rgba(213, 194, 179, 0.2) 0 0 2px, rgba(213, 194, 179, 1) 0 0 2px, rgba(213, 194, 179, 1) 0 0 5px, rgba(213, 194, 179, 1) 0 0 5px, black 0 0 1px;
 }
 
+div[data-nature="hanm"],
+span[data-nature="hanm"] {
+	text-shadow: rgba(255, 215, 0, 1) 0 0 2px, rgba(255, 215, 0, 1) 0 0 5px, rgba(255, 215, 0, 1) 0 0 5px, rgba(255, 215, 0, 1) 0 0 5px, black 0 0 1px;
+}
+div[data-nature="hanmm"],
+span[data-nature="hanmm"] {
+	text-shadow: rgba(255, 215, 0, 1) 0 0 2px, rgba(255, 215, 0, 1) 0 0 2px, rgba(255, 215, 0, 1) 0 0 2px, rgba(255, 215, 0, 1) 0 0 2px, black 0 0 1px;
+}
+
 .player .identity[data-color="unknownx"],
 div[data-nature="black"],
 span[data-nature="black"] {
