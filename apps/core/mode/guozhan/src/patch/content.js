@@ -106,62 +106,67 @@ export const chooseCharacterContent = async (event, _trigger, _player) => {
 			const name2 = result.buttons[1].link;
 			const characterChosen = [name1, name2];
 
-			/** @type {Partial<Result>?} */
-			let result2 = null;
+			// @ts-expect-error 祖宗之法就是这么写的
+			delete game.me.trueIdentity;
+			// @ts-expect-error 祖宗之法就是这么写的
+			delete game.me.pendingTrueIdentity;
+
 			const selectGroup = ["ye", ...lib.selectGroup];
 
 			// @ts-expect-error 祖宗之法就是这么写的
 			if (get.is.double(name1, true)) {
 				// @ts-expect-error 祖宗之法就是这么写的
 				if (selectGroup.includes(lib.character[name2][1])) {
-					const next = game.me
-						// @ts-expect-error 祖宗之法就是这么写的
-						.chooseControl(get.is.double(name1, true));
-
-					next.set("prompt", "请选择主将代表的势力");
 					// @ts-expect-error 祖宗之法就是这么写的
-					next.set("ai", () => _status.event.controls.randomGet());
-
-					result2 = await next.forResult();
+					const choices = get.is.double(name1, true).slice(0);
+					// @ts-expect-error 祖宗之法就是这么写的
+					game.me.pendingTrueIdentity = {
+						prompt: "请选择主将代表的势力",
+						choices,
+					};
 				} else if (!get.is.double(name2, true)) {
-					result2 = { control: lib.character[name2][1] };
+					// @ts-expect-error 祖宗之法就是这么写的
+					game.me.trueIdentity = lib.character[name2][1];
 				}
-				// 仙人之兮列如麻
 				// @ts-expect-error 祖宗之法就是这么写的
 				else if (get.is.double(name1, true).removeArray(get.is.double(name2, true)).length == 0 || get.is.double(name2, true).removeArray(get.is.double(name1, true)).length == 0) {
-					const next = game.me
-						// @ts-expect-error 祖宗之法就是这么写的
-						.chooseControl(get.is.double(name2, true).filter(group => get.is.double(name1, true).includes(group)));
-
-					next.set("prompt", "请选择你代表的势力");
 					// @ts-expect-error 祖宗之法就是这么写的
-					next.set("ai", () => _status.event.controls.randomGet());
-
-					result2 = await next.forResult();
-				} else {
-					result2 = {
+					const intersection = get.is.double(name2, true).filter(group => get.is.double(name1, true).includes(group));
+					if (intersection.length == 1) {
 						// @ts-expect-error 祖宗之法就是这么写的
-						control: get.is.double(name1, true).find(group => get.is.double(name2, true).includes(group)),
-					};
+						game.me.trueIdentity = intersection[0];
+					} else if (intersection.length) {
+						// @ts-expect-error 祖宗之法就是这么写的
+						game.me.pendingTrueIdentity = {
+							prompt: "请选择你代表的势力",
+							choices: intersection.slice(0),
+						};
+					}
+				} else {
+					// @ts-expect-error 祖宗之法就是这么写的
+					const intersection = get.is.double(name1, true).filter(group => get.is.double(name2, true).includes(group));
+					if (intersection.length) {
+						// @ts-expect-error 祖宗之法就是这么写的
+						game.me.trueIdentity = intersection[0];
+					}
 				}
 			}
 			// @ts-expect-error 祖宗之法就是这么写的
 			else if (selectGroup.includes(lib.character[name1][1]) && get.is.double(name2, true)) {
-				const next = game.me
+				// @ts-expect-error 祖宗之法就是这么写的
+				const viceGroups = get.is.double(name2, true).slice(0);
+				if (viceGroups.length == 1) {
 					// @ts-expect-error 祖宗之法就是这么写的
-					.chooseControl(get.is.double(name2, true));
-
-				next.set("prompt", "请选择副将代表的势力");
-				// @ts-expect-error 祖宗之法就是这么写的
-				next.set("ai", () => _status.event.controls.randomGet());
-
-				result2 = await next.forResult();
+					game.me.trueIdentity = viceGroups[0];
+				} else if (viceGroups.length) {
+					// @ts-expect-error 祖宗之法就是这么写的
+					game.me.pendingTrueIdentity = {
+						prompt: "请选择你的副将代表的势力",
+						choices: viceGroups,
+					};
+				}
 			}
 
-			if (result2?.control) {
-				// @ts-expect-error 祖宗之法就是这么写的
-				game.me.trueIdentity = result2.control;
-			}
 			if (characterChosen) {
 				game.me.init(characterChosen[0], characterChosen[1], false, void 0);
 				game.addRecentCharacter(characterChosen[0], characterChosen[1]);

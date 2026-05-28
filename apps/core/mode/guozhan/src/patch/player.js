@@ -7,6 +7,26 @@ export class PlayerGuozhan extends lib.element.Player {
 	trueIdentity;
 
 	/**
+	 * @type {{ prompt: string; choices: string[] } | undefined}
+	 */
+	pendingTrueIdentity;
+
+	/**
+	 * @type {{ main: Set<string>; vice: Set<string>; role: Set<string> } | undefined}
+	 */
+	_guozhanSkillZones;
+
+	/**
+	 * @type {Map<string, "main" | "vice" | "role"> | undefined}
+	 */
+	_guozhanSkillZoneIndex;
+
+	/**
+	 * @type {"main" | "vice" | "role" | undefined}
+	 */
+	_guozhanPendingZone;
+
+	/**
 	 * 获取玩家的势力
 	 *
 	 * @param { number } [num = 0] - 根据哪张武将牌返回势力，`0`为主将，`1`为副将（默认为0）
@@ -699,6 +719,8 @@ export class PlayerGuozhan extends lib.element.Player {
 			this.group
 		);
 		this.identityShown = true;
+		var mainSkills = lib.character[this.name1]?.[3] || [];
+		var viceSkills = lib.character[this.name2]?.[3] || [];
 		// @ts-expect-error 类型就是这么写的
 		for (var i = 0; i < skills.length; i++) {
 			// @ts-expect-error 类型就是这么写的
@@ -707,8 +729,11 @@ export class PlayerGuozhan extends lib.element.Player {
 			}
 			// @ts-expect-error 类型就是这么写的
 			this.hiddenSkills.remove(skills[i]);
+			var zone = mainSkills.includes(skills[i]) ? "main" : viceSkills.includes(skills[i]) ? "vice" : "role";
+			this._guozhanPendingZone = zone;
 			// @ts-expect-error 类型就是这么写的
 			this.addSkill(skills[i]);
+			this._guozhanPendingZone = void 0;
 		}
 		this.checkConflict();
 		// @ts-expect-error 类型就是这么写的
@@ -1006,5 +1031,253 @@ export class PlayerGuozhan extends lib.element.Player {
 		if (this.ai.shown < -0.5) {
 			this.ai.shown = -0.5;
 		}
+	}
+
+	hasShibing() {
+		if (this.isCharacterShibing(0)) return 1;
+		if (this.isCharacterShibing(1)) return 2;
+		return 0;
+	}
+
+	showCharacter(num, log) {
+		if (this.pendingTrueIdentity && !this.trueIdentity && this.isUnseen(2) && this.pendingTrueIdentity.choices?.length) {
+			const next = game.createEvent("guozhanChooseTrueIdentity");
+			next.player = this;
+			next.num = num;
+			next.log = log;
+			next.setContent(async function () {
+				const event = _status.event;
+				const player = event.player;
+				const pending = player.pendingTrueIdentity;
+				if (!pending?.choices?.length) {
+					lib.element.Player.prototype.showCharacter.call(player, event.num, event.log);
+					return;
+				}
+				let choice = null;
+				if (player == game.me && !_status.auto) {
+					const select = player.chooseControl(pending.choices);
+					select.set("prompt", pending.prompt || "请选择你代表的势力");
+					select.set("ai", () => _status.event.controls.randomGet());
+					const result = await select.forResult();
+					if (result?.control) choice = result.control;
+				}
+				if (!choice) {
+					const choices = pending.choices.slice();
+					if (choices.length == 1) {
+						choice = choices[0];
+					} else {
+						const prefer = Math.random() < 0.75;
+						if (prefer) {
+							const safe = choices.filter(g => player.wontYe(g));
+							const pool = safe.length ? safe : choices;
+							let maxPop = -Infinity, best = [];
+							pool.forEach(g => {
+								const p = get.population(g);
+								if (p > maxPop) { maxPop = p; best = [g]; }
+								else if (p === maxPop) best.push(g);
+							});
+							if (best.length) choice = best.randomGet();
+						}
+						if (!choice) choice = choices.randomGet();
+					}
+				}
+				player.trueIdentity = choice;
+				player.pendingTrueIdentity = void 0;
+				lib.element.Player.prototype.showCharacter.call(player, event.num, event.log);
+			});
+			return next;
+		}
+		return lib.element.Player.prototype.showCharacter.call(this, num, log);
+	}
+
+	_requestGuozhanZone(zone) {
+		if (typeof zone === "number") return zone === 1 ? "vice" : "main";
+		const normalized = String(zone).toLowerCase();
+		if (normalized == "vice") return "vice";
+		if (normalized == "role") return "role";
+		return "main";
+	}
+
+	swapCharacter(target, selfSlot = 0, targetSlot = 0) {
+		const resolved = target || this;
+		const srcZone = this._requestGuozhanZone(selfSlot);
+		const tgtZone = resolved._requestGuozhanZone(targetSlot);
+		if (!resolved || srcZone === "role" || tgtZone === "role") return;
+		if (this === resolved && srcZone === tgtZone) return;
+		const next = game.createEvent("swapCharacter");
+		next.player = this;
+		next.target = resolved;
+		next.selfZone = srcZone;
+		next.targetZone = tgtZone;
+		next.setContent(async function () {
+			const e = _status.event;
+			await e.player.$swapCharacter(e.target, e.selfZone, e.targetZone);
+		});
+		return next;
+	}
+
+	async $swapCharacter(target, selfZone, targetZone) {
+		const resolved = target || this;
+		if (!resolved) return;
+		const srcN = this._requestGuozhanZone(selfZone);
+		const tgtN = resolved._requestGuozhanZone(targetZone);
+		if (srcN === "role" || tgtN === "role") return;
+		if (this === resolved && srcN === tgtN) return;
+		const srcName = this["name" + (srcN === "main" ? "1" : "2")];
+		const tgtName = resolved["name" + (tgtN === "main" ? "1" : "2")];
+		if (!srcName || !tgtName) return;
+		const srcSkills = this.getGuozhanSkills(srcN);
+		const tgtSkills = resolved.getGuozhanSkills(tgtN);
+		const srcSnap = srcSkills.map(n => ({
+			name: n,
+			storage: Object.hasOwn(this.storage, n) ? this.storage[n] : void 0,
+			hasMark: Boolean(this.marks?.[n]),
+		}));
+		const tgtSnap = tgtSkills.map(n => ({
+			name: n,
+			storage: Object.hasOwn(resolved.storage, n) ? resolved.storage[n] : void 0,
+			hasMark: Boolean(resolved.marks?.[n]),
+		}));
+		if (this === resolved) {
+			const pairs = [this.name1, this.name2];
+			const si = srcN === "main" ? 0 : 1;
+			const ti = tgtN === "main" ? 0 : 1;
+			[pairs[si], pairs[ti]] = [pairs[ti], pairs[si]];
+			await this.changeCharacter(pairs, false);
+		} else {
+			await this.reinitCharacter(srcName, tgtName, false);
+			await resolved.reinitCharacter(tgtName, srcName, false);
+		}
+		this.syncGuozhanSkillZones?.();
+		resolved.syncGuozhanSkillZones?.();
+		tgtSnap.forEach(({ name, storage, hasMark }) => {
+			if (storage !== void 0) { this.storage[name] = storage; this.syncStorage(name); }
+			if (hasMark) this.markSkill(name, true);
+		});
+		srcSnap.forEach(({ name, storage, hasMark }) => {
+			if (storage !== void 0) { resolved.storage[name] = storage; resolved.syncStorage(name); }
+			if (hasMark) resolved.markSkill(name, true);
+		});
+		this.checkConflict();
+		if (resolved !== this) resolved.checkConflict();
+		const zt = z => z === "vice" ? "副将" : "主将";
+		if (resolved === this)
+			game.log(this, "交换了", "#g" + zt(srcN), "和", "#g" + zt(tgtN));
+		else
+			game.log(this, "与", resolved, "交换了", "#g" + zt(srcN), "与", "#g" + zt(tgtN));
+	}
+
+	isCharacterShibing(num = 0) {
+		const key = "name" + (num + 1);
+		const name = this[key];
+		const info = name && lib.character[name];
+		if (!name || !info) return false;
+		return name.startsWith("gz_shibing") || Boolean(info.isShibing);
+	}
+
+	ensureGuozhanSkillZones() {
+		if (!this._guozhanSkillZones) {
+			this._guozhanSkillZones = { main: new Set(), vice: new Set(), role: new Set() };
+			this._guozhanSkillZoneIndex = new Map();
+		}
+		return this._guozhanSkillZones;
+	}
+
+	resetGuozhanSkillZones() {
+		const zones = this.ensureGuozhanSkillZones();
+		zones.main.clear();
+		zones.vice.clear();
+		zones.role.clear();
+		this._guozhanSkillZoneIndex?.clear();
+	}
+
+	syncGuozhanSkillZones() {
+		this.resetGuozhanSkillZones();
+		const playerSkills = Array.isArray(this.skills) ? this.skills.slice() : [];
+		const skillSet = new Set(playerSkills);
+		const register = (name, zone) => {
+			const candidates = this._getCharacterSkills(name);
+			candidates.forEach(skill => {
+				if (skillSet.has(skill)) this._assignSkillToZone(skill, zone);
+			});
+		};
+		register(this.name1, "main");
+		register(this.name2, "vice");
+		playerSkills.forEach(skill => {
+			if (!this._guozhanSkillZoneIndex?.has(skill))
+				this._assignSkillToZone(skill, "role");
+		});
+		return this._guozhanSkillZones;
+	}
+
+	getGuozhanSkills(zone) {
+		return Array.from(this.ensureGuozhanSkillZones()[zone] || []);
+	}
+
+	getGuozhanSkillZone(skill) {
+		return this._guozhanSkillZoneIndex?.get(skill);
+	}
+
+	_assignSkillToZone(skill, zone) {
+		if (typeof skill !== "string") return;
+		const zones = this.ensureGuozhanSkillZones();
+		zones.main.delete(skill);
+		zones.vice.delete(skill);
+		zones.role.delete(skill);
+		zones[zone].add(skill);
+		this._guozhanSkillZoneIndex.set(skill, zone);
+	}
+
+	_removeSkillFromZone(skill) {
+		if (!this._guozhanSkillZoneIndex) return;
+		const zone = this._guozhanSkillZoneIndex.get(skill);
+		if (!zone) return;
+		this._guozhanSkillZoneIndex.delete(skill);
+		this._guozhanSkillZones?.[zone]?.delete(skill);
+	}
+
+	_getCharacterSkills(name) {
+		if (!name) return [];
+		const info = lib.character[name];
+		if (!info) return [];
+		if (Array.isArray(info)) {
+			const block = Array.isArray(info[3]) ? info[3].slice(0) : [];
+			return game.expandSkills ? game.expandSkills(block) : block;
+		}
+		if (Array.isArray(info.skills))
+			return game.expandSkills ? game.expandSkills(info.skills.slice(0)) : info.skills.slice(0);
+		return [];
+	}
+
+	init(character, character2, skill, update) {
+		super.init(character, character2, skill, update);
+		this.syncGuozhanSkillZones?.();
+	}
+
+	reinit(from, to, maxHp, online) {
+		super.reinit(from, to, maxHp, online);
+		this.syncGuozhanSkillZones?.();
+	}
+
+	uninit() {
+		super.uninit();
+		this.resetGuozhanSkillZones();
+	}
+
+	addSkill(skill, ...args) {
+		if (Array.isArray(skill)) return super.addSkill(skill, ...args);
+		super.addSkill(skill, ...args);
+		if (typeof skill === "string" && Array.isArray(this.skills) && this.skills.includes(skill)) {
+			const zone = this._guozhanPendingZone || "role";
+			if (!this.getGuozhanSkillZone(skill))
+				this._assignSkillToZone(skill, zone);
+		}
+	}
+
+	removeSkill(skill, ...args) {
+		if (Array.isArray(skill)) return super.removeSkill(skill, ...args);
+		super.removeSkill(skill, ...args);
+		if (typeof skill === "string" && (!Array.isArray(this.skills) || !this.skills.includes(skill)))
+			this._removeSkillFromZone(skill);
 	}
 }
