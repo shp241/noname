@@ -6693,7 +6693,7 @@ export class Library {
 				},
 				guozhan_mode: {
 					name: "游戏模式",
-					init: "normal",
+					init: "yingbian",
 					item: {
 						normal: "势备",
 						yingbian: "应变",
@@ -6735,10 +6735,17 @@ export class Library {
 				},
 				banGroup: {
 					name: "势力禁用",
-					init: false,
+					item: {
+						0: "不禁用",
+						1: "一",
+						2: "二",
+						3: "三",
+						4: "四",
+						5: "五",
+					},
+					init: 2,
 					frequent: true,
-					restart: true,
-					intro: "选将前将随机禁用一个势力",
+					intro: "选将前将随机禁用若干个势力",
 				},
 				shenInGuozhan: {
 					name: "神武将选择势力",
@@ -6817,22 +6824,29 @@ export class Library {
 				},
 				onlyguozhan: {
 					name: "使用国战武将",
-					init: true,
+					init: false,
 					frequent: true,
 					restart: true,
 					intro: "开启武将技能将替换为国战版本并禁用非国战武将",
 				},
 				guozhanSkin: {
 					name: "使用国战皮肤",
-					init: true,
+					init: false,
 					frequent: true,
 					restart: true,
 					intro: "开启此选项后，将会把有国战专属皮肤的武将替换为国战皮肤",
 				},
+				kejiang: {
+					name: "启用客将势力",
+					init: false,
+					frequent: true,
+					restart: true,
+					intro: "开启后将会启用客将势力",
+				},
 				junzhu: {
 					name: "替换君主",
 					init: true,
-					// frequent:true,
+					frequent: true,
 					restart: true,
 					intro: "若开启此选项，玩家的第一个回合开始时，若其主武将牌有对应的君主武将牌，则其可以将此武将牌替换为对应的君主武将牌，然后重新调整体力上限。若玩家的体力上限因此增大，则玩家回复等量的体力。",
 				},

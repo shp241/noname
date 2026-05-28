@@ -316,6 +316,16 @@ export const start = async (event, trigger, player) => {
 export const startBefore = () => {
 	const playback = localStorage.getItem(lib.configprefix + "playback");
 
+	if (!playback && lib.config.mode !== "connect") {
+		if (!lib.config.characters.includes("mode_guozhan")) {
+			return;
+		}
+	} else if (lib.config.mode === "connect") {
+		if (!lib.config.connect_characters.includes("mode_guozhan")) {
+			return;
+		}
+	}
+
 	// @ts-expect-error 祖宗之法就是这么写的
 	for (let character in lib.characterPack.mode_guozhan) {
 		if (!get.config("onlyguozhan") && !playback) {
@@ -345,6 +355,16 @@ export const startBefore = () => {
 };
 
 export const onreinit = () => {
+	if (lib.config.mode !== "connect") {
+		if (!lib.config.characters.includes("mode_guozhan")) {
+			return;
+		}
+	} else {
+		if (!lib.config.connect_characters.includes("mode_guozhan")) {
+			return;
+		}
+	}
+
 	// @ts-expect-error 祖宗之法就是这么写的
 	const pack = lib.characterPack.mode_guozhan;
 
