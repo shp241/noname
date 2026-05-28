@@ -198,39 +198,48 @@ export const start = async (event, trigger, player) => {
 			game.players[i].getId();
 		}
 
-		const groups = ["wei", "shu", "wu", "qun", "jin"];
+		const groups = ["wei", "shu", "wu", "qun", "jin", "han"];
 		const chosen = lib.config.continue_name || [];
-		if (get.config("banGroup") && groups?.length && !chosen?.length) {
-			const group = groups.randomGet();
+		const banCount = get.config("banGroup");
+		if (banCount > 0 && groups?.length && !chosen?.length) {
+			const banGroups = [];
+			const pool = groups.slice();
+			for (let i = 0; i < banCount && pool.length; i++) {
+				banGroups.push(pool.randomRemove());
+			}
 			event.videoId = lib.status.videoId++;
-			let createDialog = function (group, id) {
-				_status.bannedGroup = group;
-				var dialog = ui.create.dialog(`本局禁用势力：${get.translation(group)}`, [[["", "", group]], "vcard"], "forcebutton");
-				dialog.videoId = id;
-			};
-			game.log("本局", `<span data-nature=${get.groupnature(group, "raw")}m>${get.translation(group)}势力</span>`, "遭到了禁用");
-			game.broadcastAll(createDialog, `group_${group}`, event.videoId);
-			for (const character in lib.character) {
-				const info = get.character(character);
-				if (info?.doubleGroup?.includes(group)) {
-					info.doubleGroup.remove(group);
-					if (info.group == group && info.doubleGroup?.length) {
-						info.group = info.doubleGroup[0];
+			for (const group of banGroups) {
+				let createDialog = function (group, id) {
+					_status.bannedGroup = group;
+					var dialog = ui.create.dialog(`本局禁用势力：${get.translation(group)}`, [[["", "", group]], "vcard"], "forcebutton");
+					dialog.videoId = id;
+				};
+				game.log("本局", `<span data-nature=${get.groupnature(group, "raw")}m>${get.translation(group)}势力</span>`, "遭到了禁用");
+				game.broadcastAll(createDialog, `group_${group}`, event.videoId);
+			}
+			for (let group of banGroups) {
+				for (const character in lib.character) {
+					const info = get.character(character);
+					if (info?.doubleGroup?.includes(group)) {
+						info.doubleGroup.remove(group);
+						if (info.group == group && info.doubleGroup?.length) {
+							info.group = info.doubleGroup[0];
+						}
+						if (info.doubleGroup.length == 1) {
+							info.doubleGroup = [];
+						}
 					}
-					if (info.doubleGroup.length == 1) {
-						info.doubleGroup = [];
+					if (info.group == group) {
+						info.isUnseen = true;
 					}
+					game.broadcast(
+						(name, info) => {
+							lib.character[name] = info;
+						},
+						character,
+						info
+					);
 				}
-				if (info.group == group) {
-					info.isUnseen = true;
-				}
-				game.broadcast(
-					(name, info) => {
-						lib.character[name] = info;
-					},
-					character,
-					info
-				);
 			}
 			await game.delay(5);
 			game.broadcastAll("closeDialog", event.videoId);
