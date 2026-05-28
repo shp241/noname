@@ -210,7 +210,7 @@ export const start = async (event, trigger, player) => {
 			event.videoId = lib.status.videoId++;
 			let createDialog = function (groups, id) {
 				_status.bannedGroup = groups[0];
-				var cards = [[groups.map(g => ["", "", g]), "vcard"]];
+				var cards = [[groups.map(g => ["", "", "group_" + g + "_bg"]), "vcard"]];
 				const groupText = groups.map(g => `<span data-nature=${get.groupnature(g, "raw")}m>${get.translation(g)}势力</span>`).join("、");
 				var dialog = ui.create.dialog(`本局禁用势力：${groupText}`, cards, "forcebutton");
 				dialog.videoId = id;
