@@ -1071,51 +1071,8 @@ export class PlayerGuozhan extends lib.element.Player {
 
 	showCharacter(num, log) {
 		if (this.pendingTrueIdentity && !this.trueIdentity && this.isUnseen(2) && this.pendingTrueIdentity.choices?.length) {
-			const next = game.createEvent("guozhanChooseTrueIdentity");
-			next.player = this;
-			next.num = num;
-			next.log = log;
-			next.setContent(async function () {
-				const event = _status.event;
-				const player = event.player;
-				const pending = player.pendingTrueIdentity;
-				if (!pending?.choices?.length) {
-					lib.element.Player.prototype.showCharacter.call(player, event.num, event.log);
-					return;
-				}
-				let choice = null;
-				if (player == game.me && !_status.auto) {
-					const select = player.chooseControl(pending.choices);
-					select.set("prompt", pending.prompt || "请选择你代表的势力");
-					select.set("ai", () => _status.event.controls.randomGet());
-					const result = await select.forResult();
-					if (result?.control) choice = result.control;
-				}
-				if (!choice) {
-					const choices = pending.choices.slice();
-					if (choices.length == 1) {
-						choice = choices[0];
-					} else {
-						const prefer = Math.random() < 0.75;
-						if (prefer) {
-							const safe = choices.filter(g => player.wontYe(g));
-							const pool = safe.length ? safe : choices;
-							let maxPop = -Infinity, best = [];
-							pool.forEach(g => {
-								const p = get.population(g);
-								if (p > maxPop) { maxPop = p; best = [g]; }
-								else if (p === maxPop) best.push(g);
-							});
-							if (best.length) choice = best.randomGet();
-						}
-						if (!choice) choice = choices.randomGet();
-					}
-				}
-				player.trueIdentity = choice;
-				player.pendingTrueIdentity = void 0;
-				lib.element.Player.prototype.showCharacter.call(player, event.num, event.log);
-			});
-			return next;
+			this.trueIdentity = this.pendingTrueIdentity.choices[0];
+			this.pendingTrueIdentity = void 0;
 		}
 		return lib.element.Player.prototype.showCharacter.call(this, num, log);
 	}
