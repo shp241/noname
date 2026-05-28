@@ -210,12 +210,9 @@ export const start = async (event, trigger, player) => {
 			event.videoId = lib.status.videoId++;
 			let createDialog = function (groups, id) {
 				_status.bannedGroup = groups[0];
-				if (groups.length == 1) {
-					var dialog = ui.create.dialog(`本局禁用势力：${get.translation(groups[0])}`, [[["", "", groups[0]]], "vcard"], "forcebutton");
-				} else {
-					const groupText = groups.map(g => `<span data-nature=${get.groupnature(g, "raw")}m>${get.translation(g)}势力</span>`).join("、");
-					var dialog = ui.create.dialog(`本局禁用势力：${groupText}`, groups.map(g => [[["", "", g]], "vcard"]), "forcebutton");
-				}
+				var cards = groups.map(g => [[["", "", "group_" + g]], "vcard"]);
+				const groupText = groups.map(g => `<span data-nature=${get.groupnature(g, "raw")}m>${get.translation(g)}势力</span>`).join("、");
+				var dialog = ui.create.dialog(`本局禁用势力：${groupText}`, cards, "forcebutton");
 				dialog.videoId = id;
 			};
 			game.log("本局", banGroups.map(g => `<span data-nature=${get.groupnature(g, "raw")}m>${get.translation(g)}势力</span>`).join("、"), "遭到了禁用");
