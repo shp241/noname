@@ -1,6 +1,25 @@
 import { lib, game, ui, get, ai, _status } from "noname";
 import { broadcastAll } from "./patch/game.js";
 
+function addJunEquipToPile() {
+	if (!Array.isArray(lib.card.list)) return;
+	const getJunEquip = typeof game.getJunEquip === "function" ? game.getJunEquip : null;
+	if (!getJunEquip) return;
+	const junEquipList = getJunEquip.call(game);
+	if (!Array.isArray(junEquipList)) return;
+	const junzhuEnabled = !!get.config("junzhu");
+	const bannedGroups = _status.banGroups || [];
+	for (const entry of junEquipList) {
+		if (!entry || entry.length < 3) continue;
+		const [groups, normalEquip, junEquip] = entry;
+		const allGroupsBanned = groups.length ? groups.every(group => bannedGroups.includes(group)) : false;
+		const equipToAdd = junzhuEnabled && !allGroupsBanned ? junEquip : normalEquip;
+		if (Array.isArray(equipToAdd)) {
+			lib.card.list.push(equipToAdd.slice(0));
+		}
+	}
+}
+
 /**
  * @type {ContentFuncByAll}
  */
@@ -78,6 +97,8 @@ export const start = async (event, trigger, player) => {
 				lib.card.list = lib.guozhanPile.slice(0);
 				break;
 		}
+
+		addJunEquipToPile();
 
 		// @ts-expect-error 祖宗之法就是这么写的
 		game.fixedPile = true;
@@ -172,6 +193,8 @@ export const start = async (event, trigger, player) => {
 				lib.card.list = lib.guozhanPile.slice(0);
 				break;
 		}
+
+		addJunEquipToPile();
 
 		if (_status.mode != "free") {
 			// @ts-expect-error 祖宗之法就是这么写的
