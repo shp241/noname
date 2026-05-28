@@ -514,6 +514,7 @@ export class Library {
 				["kongchao", "soil"],
 				["fujia", "orange"],
 				["canqu", "fire"],
+				["gujun", "green"],
 				["force", "metal"],
 			]),
 			complex: new Map([
@@ -725,6 +726,7 @@ export class Library {
 				["kongchao", event => !event.player.countCards("h")],
 				["fujia", event => event.player.isMaxHandcard()],
 				["canqu", event => event.player.getHp() == 1],
+				["gujun", event => event.player.identity != "unknown" && !game.hasPlayer(current => current != event.player && current.isFriendOf(event.player))],
 			]),
 		},
 		effect: new Map([
@@ -766,6 +768,22 @@ export class Library {
 				},
 			],
 			[
+				"gainsha",
+				(event, trigger, player) => {
+					const cardx = trigger.respondTo;
+					if (cardx && cardx[1] && get.name(cardx[1]) == "sha" && cardx[1].cards && cardx[1].cards.filterInD("od").length) {
+						player.gain(cardx[1].cards.filterInD("od"), "gain2");
+					}
+				},
+			],
+			[
+				"wushicishu",
+				(event, trigger, player) => {
+					trigger.addCount = false;
+					player.getStat().card.sha--;
+				},
+			],
+			[
 				"hit",
 				(event, trigger, player) => {
 					trigger.directHit.addArray(game.players).addArray(game.dead);
@@ -786,6 +804,8 @@ export class Library {
 			["damage", "伤害+1"],
 			["draw", "摸一张牌"],
 			["gain", "获得响应的牌"],
+			["gainsha", "获得响应的【杀】"],
+			["wushicishu", "无视次数限制"],
 			["hit", "此牌不可被响应"],
 			["all", "无视条件执行所有选项"],
 		]),
@@ -11339,9 +11359,24 @@ export class Library {
 			num = game.checkMod(card, player, num, "cardUsable", player);
 			if (typeof num != "number") {
 				return true;
-			} else {
-				return player.countUsed(card) < num;
 			}
+			if (player.countUsed(card) < num) {
+				return true;
+			}
+			if (get.cardtag(card, "yingbian_wushicishu")) {
+				var ycs2 = get.simpleYingbianConditions(card);
+				var checkEvent2 = event || _status.event;
+				for (var j = 0; j < ycs2.length; j++) {
+					var conditionFunc2 = lib.yingbian.condition.simple.get(ycs2[j]);
+					if (conditionFunc2 && conditionFunc2(checkEvent2)) {
+						return true;
+					}
+				}
+				if (get.cardtag(card, "yingbian_force") || player.hasSkillTag("forceYingbian")) {
+					return true;
+				}
+			}
+			return false;
 		},
 		cardUsable(card, player, event) {
 			card = get.autoViewAs(card);
@@ -11372,6 +11407,19 @@ export class Library {
 			}
 			if (player.countUsed(card) < num) {
 				return true;
+			}
+			if (get.cardtag(card, "yingbian_wushicishu")) {
+				var ycs = get.simpleYingbianConditions(card);
+				var checkEvent = event || _status.event;
+				for (var i = 0; i < ycs.length; i++) {
+					var conditionFunc = lib.yingbian.condition.simple.get(ycs[i]);
+					if (conditionFunc && conditionFunc(checkEvent)) {
+						return true;
+					}
+				}
+				if (get.cardtag(card, "yingbian_force") || player.hasSkillTag("forceYingbian")) {
+					return true;
+				}
 			}
 			if (
 				game.hasPlayer2(function (current) {
