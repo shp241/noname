@@ -517,23 +517,47 @@ export class PlayerGuozhan extends lib.element.Player {
 		next.setContent("removeCharacter");
 		return next;
 	}
-	$removeCharacter(num) {
+	async $removeCharacter(num) {
 		var name = this["name" + (num + 1)];
 		var info = lib.character[name];
-		if (!info) {
-			return;
-		}
-		var to = "gz_shibing" + (info[0] == "male" ? 1 : 2) + info[1];
-		game.log(this, "移除了" + (num ? "副将" : "主将"), "#b" + name);
-		if (!lib.character[to]) {
+		if (!info) return;
+
+		let tonglings = game.getTongling(this.identity);
+		if (tonglings.length) {
+			if (tonglings.length == 1) {
+				var to = tonglings[0];
+				game.log(this, "移除了" + (num ? "副将" : "主将"), "#b" + name, "，变为", "#b" + to);
+				this.reinit(name, to, false);
+				this.showCharacter(num, false);
+				// @ts-expect-error 类型就是这么写的
+				_status.characterlist.add(name);
+				game.useTongling(this.identity, to);
+			} else {
+				let next = this.chooseButton(true, ["选择要变更的武将牌", [tonglings, "character"]]);
+				next.ai = function (button) {
+					return get.guozhanRank(button.link);
+				};
+				let result = await next.forResult();
+				var to = result.links[0];
+				game.log(this, "移除了" + (num ? "副将" : "主将"), "#b" + name, "，变为", "#b" + to);
+				this.reinit(name, to, false);
+				this.showCharacter(num, false);
+				// @ts-expect-error 类型就是这么写的
+				_status.characterlist.add(name);
+				game.useTongling(this.identity, to);
+			}
+		} else {
+			var to = "gz_shibing" + (info[0] == "male" ? 1 : 2) + "key";
+			game.log(this, "移除了" + (num ? "副将" : "主将"), "#b" + name);
+			if (!lib.character[to]) {
+				// @ts-expect-error 类型就是这么写的
+				lib.character[to] = [info[0], info[1], 0, [], [`character:${to.slice(3, 11)}`, "unseen"]];
+				lib.translate[to] = `${get.translation(info[1])}兵`;
+			}
+			this.reinit(name, to, false);
 			// @ts-expect-error 类型就是这么写的
-			lib.character[to] = [info[0], info[1], 0, [], [`character:${to.slice(3, 11)}`, "unseen"]];
-			lib.translate[to] = `${get.translation(info[1])}兵`;
+			_status.characterlist.add(name);
 		}
-		this.reinit(name, to, false);
-		this.showCharacter(num, false);
-		// @ts-expect-error 类型就是这么写的
-		_status.characterlist.add(name);
 	}
 
 	/**

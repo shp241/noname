@@ -266,346 +266,75 @@ export class GameGuozhan extends Game {
 		return list;
 	}
 
-	/**
-	 * @param {string[]} list
-	 */
-	getIdentityList2(list) {
-		for (var i in list) {
-			switch (i) {
-				case "unknown":
-					list[i] = "未知";
-					break;
-				case "ye":
-					list[i] = "野心家";
-					break;
-				case "qun":
-					list[i] += "雄";
-					break;
-				case "key":
-					list[i] = "Key";
-					break;
-				case "jin":
-					list[i] += "朝";
-					break;
-				case "han":
-					list[i] += "朝";
-					break;
-				default:
-					list[i] += "国";
-			}
-		}
+	tongling = {};
+
+	getJunEquip() {
+		return [
+			[["wei"], ["heart", 13, "zhuahuang"], ["heart", 13, "liulongcanjia"]],
+			[["shu"], ["spade", 2, "cixiong"], ["spade", 2, "feilongduofeng"]],
+			[["wu"], ["diamond", 6, "wuliu"], ["diamond", 6, "dinglanyemingzhu"]],
+			[["qun"], ["heart", 3, "jingfanma", null, ["lianheng"]], ["heart", 3, "taipingyaoshu"]],
+			[["jin"], ["spade", 5, "jueying"], ["spade", 5, "linxiaoyuyu"]],
+			[["han"], [null, null, null], ["heart", 9, "chixiaojian"]],
+			[["han"], ["club", 1, "yuxi"], ["club", 1, "yuxi"]],
+		];
 	}
 
-	/**
-	 * 获取当前对局对应录像的名称
-	 *
-	 * @returns {[name: string, situation: string]}
-	 */
-	getVideoName() {
-		var str = get.translation(game.me.name1) + "/" + get.translation(game.me.name2);
-		// @ts-expect-error 祖宗之法就是这么写的
-		var str2 = _status.separatism
-			? get.modetrans({
-					mode: lib.config.mode,
-					separatism: true,
-				})
-			: get.cnNumber(parseInt(get.config("player_number"))) + "人" + get.translation(lib.config.mode);
-		if (game.me.identity == "ye") {
-			str2 += " - 野心家";
+	getTongling(group) {
+
+	getTongling(group) {
+		if (!this.tongling) { this.tongling = {}; return []; }
+		if (!(group in this.tongling)) return [];
+		let t = [];
+		for (let item of this.tongling[group]) {
+			if (item.times > 0 && !t.includes(item.name)) t.push(item.name);
 		}
-		return [str, str2];
+		return t;
 	}
 
-	/**
-	 * 显示所有玩家的身份
-	 *
-	 * @param {boolean} started
-	 */
-	showIdentity(started) {
-		if (game.phaseNumber == 0 && !started) {
-			return;
+	addTongling(group, name, times = Infinity) {
+		if (!this.tongling) this.tongling = {};
+		if (!(group in this.tongling)) this.tongling[group] = [];
+		if (times === 1) {
+			for (let item of this.tongling[group]) {
+				if (item.name === name && item.times > 0) return false;
+			}
 		}
-		for (var i = 0; i < game.players.length; i++) {
-			game.players[i].showCharacter(2, false);
-		}
+		this.tongling[group].push({ name, times });
+		return true;
 	}
 
-	/**
-	 * > ?
-	 */
-	tryResult() {
-		var map = {},
-			sides = [],
-			pmap = _status.connectMode ? lib.playerOL : game.playerMap,
-			hiddens = [];
-		for (var i of game.players) {
-			if (i.identity == "unknown") {
-				hiddens.push(i);
-				continue;
-			}
-			var added = false;
-			for (var j of sides) {
-				// @ts-expect-error 祖宗之法就是这么写的
-				if (i.isFriendOf(pmap[j])) {
-					added = true;
-					map[j].push(i);
-					break;
-				}
-			}
-			if (!added) {
-				map[i.playerid] = [i];
-				sides.push(i.playerid);
-			}
-		}
-		if (!sides.length) {
-			return;
-		} else if (sides.length > 1) {
-			if (!hiddens.length && sides.length == 2) {
-				if (
-					map[sides[0]].length == 1 &&
-					!map[sides[1]].filter(function (i) {
-						return i.identity != "ye" && i.isUnseen(0);
-					}).length
-				) {
-					map[sides[0]][0].showGiveup();
-				}
-				if (
-					map[sides[1]].length == 1 &&
-					!map[sides[0]].filter(function (i) {
-						return i.identity != "ye" && i.isUnseen(0);
-					}).length
-				) {
-					map[sides[1]][0].showGiveup();
-				}
-			}
-		} else {
-			var isYe = function (player) {
-				return player.identity != "ye" && lib.character[player.name1][1] == "ye";
-			};
-			if (!hiddens.length) {
-				if (map[sides[0]].length > 1) {
-					// @ts-expect-error 祖宗之法就是这么写的
-					for (var i of map[sides[0]]) {
-						if (isYe(i)) {
-							// @ts-expect-error 祖宗之法就是这么写的
-							game.showYexings();
-							return;
-						}
-					}
-				}
-				broadcastAll(function (id) {
-					// @ts-expect-error 祖宗之法就是这么写的
-					game.winner_id = id;
-				}, sides[0]);
-				// @ts-expect-error 祖宗之法就是这么写的
-				game.checkResult();
-			} else {
-				var identity = map[sides[0]][0].identity;
-				if (identity == "ye") {
-					return;
-				}
-				// @ts-expect-error 祖宗之法就是这么写的
-				for (var i of map[sides[0]]) {
-					if (isYe(i)) {
-						return;
-					}
-				}
-				for (var ind = 0; ind < hiddens.length; ind++) {
-					var current = hiddens[ind];
-					// @ts-expect-error 祖宗之法就是这么写的
-					if (isYe(current) || current.getGuozhanGroup(2) != identity || !current.wontYe(null, ind + 1)) {
-						return;
-					}
-				}
-				broadcastAll(function (id) {
-					// @ts-expect-error 祖宗之法就是这么写的
-					game.winner_id = id;
-				}, sides[0]);
-				// @ts-expect-error 祖宗之法就是这么写的
-				game.checkResult();
-			}
-		}
-	}
-
-	/**
-	 * 检查游戏结果
-	 */
-	checkResult() {
-		// @ts-expect-error 祖宗之法就是这么写的
-		_status.overing = true;
-		// @ts-expect-error 祖宗之法就是这么写的
-		var me = game.me._trueMe || game.me;
-		for (var i = 0; i < game.players.length; i++) {
-			game.players[i].showCharacter(2);
-		}
-		// @ts-expect-error 祖宗之法就是这么写的
-		var winner = (_status.connectMode ? lib.playerOL : game.playerMap)[game.winner_id];
-		game.over(winner && winner.isFriendOf(me) ? true : false);
-		// @ts-expect-error 祖宗之法就是这么写的
-		game.showIdentity();
-	}
-
-	/**
-	 * > ?
-	 * @param {Player} player
-	 * @returns {boolean}
-	 */
-	checkOnlineResult(player) {
-		// @ts-expect-error 祖宗之法就是这么写的
-		var winner = lib.playerOL[game.winner_id];
-		return winner && winner.isFriendOf(game.me);
-	}
-
-	chooseCharacter() {
-		const next = game.createEvent("chooseCharacter");
-
-		next.set("showConfig", true);
-		next.set("addPlayer", true);
-		next.set("ai", check);
-		next.setContent(chooseCharacterContent);
-
-		return next;
-
-		/**
-		 * @param {Player} player
-		 * @param {string[]} list
-		 * @param {string[]} [back]
-		 * @returns
-		 */
-		function check(player, list, back) {
-			if (_status.brawl && _status.brawl.chooseCharacterAi) {
-				if (_status.brawl.chooseCharacterAi(player, list, back) !== false) {
-					return;
-				}
-			}
-			var filterChoice = function (name1, name2) {
-				// @ts-expect-error 祖宗之法就是这么写的
-				if (_status.separatism) {
-					return true;
-				}
-				var group1 = lib.character[name1][1];
-				var group2 = lib.character[name2][1];
-				// @ts-expect-error 祖宗之法就是这么写的
-				var doublex = get.is.double(name1, true);
-				if (doublex) {
-					// @ts-expect-error 祖宗之法就是这么写的
-					var double = get.is.double(name2, true);
-					// @ts-expect-error 祖宗之法就是这么写的
-					if (double) {
-						return doublex.some(group => double.includes(group));
-					}
-					// @ts-expect-error 祖宗之法就是这么写的
-					return doublex.includes(group2) || lib.selectGroup.includes(group2);
+	removeTongling(group, name) {
+		if (!this.tongling) { this.tongling = {}; return; }
+		if (!(group in this.tongling)) return;
+		for (let i = 0; i < this.tongling[group].length; i++) {
+			let item = this.tongling[group][i];
+			if (item.name === name) {
+				if (item.times === Infinity) {
+					this.tongling[group].splice(i, 1);
 				} else {
-					if (group1 == "ye" || lib.selectGroup.includes(group1)) {
-						return group2 != "ye";
-					}
-					// @ts-expect-error 祖宗之法就是这么写的
-					var double = get.is.double(name2, true);
-					// @ts-expect-error 祖宗之法就是这么写的
-					if (double) {
-						return double.includes(group1);
-					}
-					return group1 == group2 || lib.selectGroup.includes(group2);
+					item.times = 0;
 				}
-			};
-			for (var i = 0; i < list.length - 1; i++) {
-				for (var j = i + 1; j < list.length; j++) {
-					if (filterChoice(list[i], list[j]) || filterChoice(list[j], list[i])) {
-						var mainx = list[i];
-						var vicex = list[j];
-						// @ts-expect-error 祖宗之法就是这么写的
-						if (!filterChoice(mainx, vicex) || (filterChoice(vicex, mainx) && get.guozhanReverse(mainx, vicex))) {
-							mainx = list[j];
-							vicex = list[i];
-						}
-						player.init(mainx, vicex, false);
-						// @ts-expect-error 祖宗之法就是这么写的
-						delete player.trueIdentity;
-						// @ts-expect-error 祖宗之法就是这么写的
-						delete player.pendingTrueIdentity;
-						const selectGroup = ["ye", ...lib.selectGroup];
-						// @ts-expect-error 祖宗之法就是这么写的
-						if (get.is.double(mainx, true)) {
-							// @ts-expect-error 祖宗之法就是这么写的
-							if (selectGroup.includes(lib.character[vicex][1])) {
-								// @ts-expect-error 祖宗之法就是这么写的
-								player.pendingTrueIdentity = {
-									prompt: "请选择主将代表的势力",
-									choices: get.is.double(mainx, true).slice(0),
-								};
-							} else if (!get.is.double(vicex, true)) {
-								player.trueIdentity = lib.character[vicex][1];
-							}
-							// @ts-expect-error 祖宗之法就是这么写的
-							else if (get.is.double(mainx, true).removeArray(get.is.double(vicex, true)).length == 0 || get.is.double(vicex, true).removeArray(get.is.double(mainx, true)).length == 0) {
-								// @ts-expect-error 祖宗之法就是这么写的
-								const intersection = get.is.double(vicex, true).filter(group => get.is.double(mainx, true).includes(group));
-								if (intersection.length == 1) {
-									player.trueIdentity = intersection[0];
-								} else if (intersection.length) {
-									// @ts-expect-error 祖宗之法就是这么写的
-									player.pendingTrueIdentity = {
-										prompt: "请选择你代表的势力",
-										choices: intersection.slice(0),
-									};
-								}
-							}
-							// @ts-expect-error 祖宗之法就是这么写的
-							else {
-								// @ts-expect-error 祖宗之法就是这么写的
-								const intersection = get.is.double(mainx, true).filter(group => get.is.double(vicex, true).includes(group));
-								if (intersection.length == 1) {
-									player.trueIdentity = intersection[0];
-								} else if (intersection.length) {
-									// @ts-expect-error 祖宗之法就是这么写的
-									player.pendingTrueIdentity = {
-										prompt: "请选择你代表的势力",
-										choices: intersection.slice(0),
-									};
-								}
-							}
-							// @ts-expect-error 祖宗之法就是这么写的
-						} else if (selectGroup.includes(lib.character[mainx][1]) && get.is.double(vicex, true)) {
-							// @ts-expect-error 祖宗之法就是这么写的
-							const viceGroups = get.is.double(vicex, true).slice(0);
-							if (viceGroups.length == 1) {
-								player.trueIdentity = viceGroups[0];
-							} else if (viceGroups.length) {
-								// @ts-expect-error 祖宗之法就是这么写的
-								player.pendingTrueIdentity = {
-									prompt: "请选择你的副将代表的势力",
-									choices: viceGroups,
-								};
-							}
-						}
-						if (back) {
-							list.remove(player.name1);
-							list.remove(player.name2);
-							for (var i = 0; i < list.length; i++) {
-								back.push(list[i]);
-							}
-						}
-						return;
-					}
-				}
+				return;
 			}
 		}
 	}
 
-	chooseCharacterOL() {
-		var next = game.createEvent("chooseCharacter");
-		next.setContent(chooseCharacterOLContent);
-		return next;
+	useTongling(group, name) {
+		if (!this.tongling) { this.tongling = {}; return false; }
+		if (!(group in this.tongling)) return false;
+		for (let item of this.tongling[group]) {
+			if (item.name === name && item.times > 0) {
+				if (item.times === Infinity) return true;
+				item.times--;
+				return item.times > 0;
+			}
+		}
+		return false;
 	}
 
 	/**
-	 * 类型兼容版本
-	 *
-	 * @param {string} type
-	 * @param {Player?} player
-	 * @param {any} [content]
-	 * @returns
+	 * `Game#addVideo`的类型兼容版本
 	 */
 	// @ts-expect-error 祖宗之法就是这么写的
 	addVideo(type, player, content) {
