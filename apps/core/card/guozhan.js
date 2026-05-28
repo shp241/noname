@@ -1566,6 +1566,8 @@ game.import("card", function () {
 				subtype: "equip4",
 				distance: { globalFrom: -1 },
 			},
+			chixiaojian: { fullskin: true, type: "equip", subtype: "equip1", distance: { attackFrom: -2 }, ai: { basic: { equipValue: 5 } }, skills: ["chixiaojian_skill"] },
+			linxiaoyuyu: { fullskin: true, type: "equip", subtype: "equip4", distance: { globalFrom: -1 }, skills: ["linxiaoyuyu_skill"], onLose() { player.addTempSkill("linxiaoyuyu_skill_lose"); }, loseDelay: false, ai: { value(card, player) { return 8; }, equipValue(card, player) { if (player.isDamaged()) return 8; return 4; } } },
 		},
 		skill: {
 			zhaoshu_skill: {
@@ -2550,6 +2552,10 @@ game.import("card", function () {
 			jingfanma_bg: "-马",
 			jingfanma: "惊帆",
 			jingfanma_info: "锁定技，你计算与其他角色的距离-1。",
+			chixiaojian: "赤霄剑",
+			chixiaojian_info: "锁定技，你使用【杀】指定一个目标后，若你与其势力大小不同，其需交给你一张红色手牌，否则其不能抵消此【杀】。",
+			linxiaoyuyu: "临筱玉舆",
+			linxiaoyuyu_info: "锁定技，你计算与其他角色的距离-1。此牌置入一个装备区后，当前回合角色回复1点体力；此牌离开一个装备区后，当前回合角色摸一张牌。",
 			huxinjing_bg: "镜",
 			huxinjing: "护心镜",
 			huxinjing_info: "此牌可对其他角色使用。当你受到伤害时，若伤害值大于1或大于等于你的体力值，则你可以将所有【护心镜】置入弃牌堆，然后防止此伤害。",
