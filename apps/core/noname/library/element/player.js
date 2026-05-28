@@ -3542,9 +3542,21 @@ export class Player extends HTMLDivElement {
 			}
 			switch (double_hp) {
 				case "pingjun": {
-					this.maxHp = Math.floor((maxHp1 + maxHp2) / 2);
-					this.hp = Math.floor((hp1 + hp2) / 2);
-					this.singleHp = (maxHp1 + maxHp2) % 2 === 1;
+					var avgMaxHp = (maxHp1 + maxHp2) / 2;
+					var avgHp = (hp1 + hp2) / 2;
+					var hasHalf = (maxHp1 + maxHp2) % 2 === 1;
+					if (avgMaxHp >= 5) {
+						var excess = avgMaxHp - 4;
+						this.extraYinyangyu = Math.floor(excess * 2);
+						this.maxHp = 4;
+						this.hp = Math.min(4, Math.floor(avgHp));
+						this.singleHp = false;
+					} else {
+						this.maxHp = Math.floor(avgMaxHp);
+						this.hp = Math.floor(avgHp);
+						this.singleHp = hasHalf;
+						this.extraYinyangyu = 0;
+					}
 					break;
 				}
 				case "zuidazhi": {
@@ -4104,6 +4116,7 @@ export class Player extends HTMLDivElement {
 
 		if (this.name2) {
 			delete this.singleHp;
+			delete this.extraYinyangyu;
 			delete this.name2;
 		}
 
@@ -13271,13 +13284,22 @@ export class Player extends HTMLDivElement {
 				return false;
 			}
 			var list = game.filterPlayer(function (current) {
-				return current.identity != "unknown" && current.hasSkillTag("forceMajor");
+				return current.identity != "unknown" && !current.isOut() && current.hasSkillTag("forceMajor");
 			});
 			if (list.length) {
+				var friendCount = 0;
 				for (var i of list) {
 					if (i.isFriendOf(this)) {
-						return true;
+						friendCount++;
 					}
+				}
+				if (friendCount > 0) {
+					var allFriends = game.filterPlayer(
+						function (current) {
+							return current.identity != "unknown" && !current.isOut() && current.isFriendOf(this);
+						}.bind(this)
+					);
+					return allFriends.length >= 2;
 				}
 				return false;
 			}
@@ -13286,6 +13308,9 @@ export class Player extends HTMLDivElement {
 				pmap = _status.connectMode ? lib.playerOL : game.playerMap,
 				player;
 			for (var i of game.players) {
+				if (i.isOut && i.isOut()) {
+					continue;
+				}
 				if (i.identity == "unknown") {
 					continue;
 				}
@@ -13319,22 +13344,37 @@ export class Player extends HTMLDivElement {
 			return true;
 		} else {
 			var list = game.filterPlayer(function (current) {
-				return current.hasSkillTag("forceMajor");
+				return !current.isOut() && current.hasSkillTag("forceMajor");
 			});
 			if (list.length) {
+				var sameGroupCount = 0;
 				for (var i of list) {
 					if (i.group == this.group) {
-						return true;
+						sameGroupCount++;
 					}
+				}
+				if (sameGroupCount > 0) {
+					var allSameGroup = game.filterPlayer(
+						function (current) {
+							return !current.isOut() && current.group == this.group;
+						}.bind(this)
+					);
+					return allSameGroup.length >= 2;
 				}
 				return false;
 			}
 			var map = {};
 			for (var i of game.players) {
+				if (i.isOut && i.isOut()) {
+					continue;
+				}
 				if (!map[i.group]) {
 					map[i.group] = [];
 				}
 				map[i.group].push(i);
+			}
+			if (!map[this.group] || map[this.group].length < 2) {
+				return false;
 			}
 			for (var i in map) {
 				if (map[i].length > map[this.group].length) {
@@ -13346,7 +13386,11 @@ export class Player extends HTMLDivElement {
 	}
 	isNotMajor() {
 		for (var i = 0; i < game.players.length; i++) {
-			if (game.players[i].isMajor()) {
+			var current = game.players[i];
+			if (current.isOut && current.isOut()) {
+				continue;
+			}
+			if (current.isMajor()) {
 				return !this.isMajor();
 			}
 		}

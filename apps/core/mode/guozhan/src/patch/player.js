@@ -733,6 +733,11 @@ export class PlayerGuozhan extends lib.element.Player {
 			}
 			if (!this.isUnseen(2) && !this._mingzhied) {
 				this._mingzhied = true;
+				if (this.extraYinyangyu && this.extraYinyangyu > 0) {
+					for (var i = 0; i < this.extraYinyangyu; i++) {
+						this.doubleDraw();
+					}
+				}
 				if (this.singleHp) {
 					this.doubleDraw();
 				}
