@@ -328,10 +328,10 @@ export const chooseCharacterContent = async (event, _trigger, _player) => {
 		const dialog = ui.create.dialog("选择角色", "hidden", [chooseList, "character"]);
 
 		if (_status.banGroups && _status.banGroups.length) {
-			const banDiv = ui.create.div(".dialog-bar", dialog.content);
+			const banDiv = ui.create.div(dialog.content);
 			banDiv.style.textAlign = "center";
-			banDiv.style.padding = "6px";
-			banDiv.innerHTML = "禁用势力：" + _status.banGroups.map(g => `<span data-nature=${get.groupnature(g, "raw")}m>${get.translation(g)}势力</span>`).join("、");
+			banDiv.style.padding = "4px 0 0 0";
+			banDiv.innerHTML = "禁用势力：" + _status.banGroups.map(g => `<span data-nature=${get.groupnature(g, "raw")}m>${get.translation("group_" + g + "_bg")}</span>`).join("、");
 			dialog.content.insertBefore(banDiv, dialog.content.firstChild);
 		}
 
