@@ -520,33 +520,64 @@ export class GameGuozhan extends Game {
 							vicex = list[i];
 						}
 						player.init(mainx, vicex, false);
+						// @ts-expect-error 祖宗之法就是这么写的
+						delete player.trueIdentity;
+						// @ts-expect-error 祖宗之法就是这么写的
+						delete player.pendingTrueIdentity;
 						const selectGroup = ["ye", ...lib.selectGroup];
 						// @ts-expect-error 祖宗之法就是这么写的
 						if (get.is.double(mainx, true)) {
 							// @ts-expect-error 祖宗之法就是这么写的
 							if (selectGroup.includes(lib.character[vicex][1])) {
 								// @ts-expect-error 祖宗之法就是这么写的
-								player.trueIdentity = get.is.double(mainx, true).randomGet();
+								player.pendingTrueIdentity = {
+									prompt: "请选择主将代表的势力",
+									choices: get.is.double(mainx, true).slice(0),
+								};
 							} else if (!get.is.double(vicex, true)) {
 								player.trueIdentity = lib.character[vicex][1];
 							}
 							// @ts-expect-error 祖宗之法就是这么写的
 							else if (get.is.double(mainx, true).removeArray(get.is.double(vicex, true)).length == 0 || get.is.double(vicex, true).removeArray(get.is.double(mainx, true)).length == 0) {
 								// @ts-expect-error 祖宗之法就是这么写的
-								player.trueIdentity = get.is
+								const intersection = get.is.double(vicex, true).filter(group => get.is.double(mainx, true).includes(group));
+								if (intersection.length == 1) {
+									player.trueIdentity = intersection[0];
+								} else if (intersection.length) {
 									// @ts-expect-error 祖宗之法就是这么写的
-									.double(vicex, true)
-									// @ts-expect-error 祖宗之法就是这么写的
-									.filter(group => get.is.double(mainx, true).includes(group))
-									.randomGet();
+									player.pendingTrueIdentity = {
+										prompt: "请选择你代表的势力",
+										choices: intersection.slice(0),
+									};
+								}
 							}
 							// @ts-expect-error 祖宗之法就是这么写的
 							else {
-								player.trueIdentity = get.is.double(mainx, true).find(group => get.is.double(vicex, true).includes(group));
+								// @ts-expect-error 祖宗之法就是这么写的
+								const intersection = get.is.double(mainx, true).filter(group => get.is.double(vicex, true).includes(group));
+								if (intersection.length == 1) {
+									player.trueIdentity = intersection[0];
+								} else if (intersection.length) {
+									// @ts-expect-error 祖宗之法就是这么写的
+									player.pendingTrueIdentity = {
+										prompt: "请选择你代表的势力",
+										choices: intersection.slice(0),
+									};
+								}
 							}
 							// @ts-expect-error 祖宗之法就是这么写的
 						} else if (selectGroup.includes(lib.character[mainx][1]) && get.is.double(vicex, true)) {
-							player.trueIdentity = get.is.double(vicex, true).randomGet();
+							// @ts-expect-error 祖宗之法就是这么写的
+							const viceGroups = get.is.double(vicex, true).slice(0);
+							if (viceGroups.length == 1) {
+								player.trueIdentity = viceGroups[0];
+							} else if (viceGroups.length) {
+								// @ts-expect-error 祖宗之法就是这么写的
+								player.pendingTrueIdentity = {
+									prompt: "请选择你的副将代表的势力",
+									choices: viceGroups,
+								};
+							}
 						}
 						if (back) {
 							list.remove(player.name1);
