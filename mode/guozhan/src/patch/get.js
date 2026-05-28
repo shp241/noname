@@ -189,20 +189,31 @@ export class GetGuozhan extends Get {
 	 * @returns
 	 */
 	realAttitude(from, to, difficulty, toidentity) {
+		/**
+		 * 仅根据“可公开信息”推断身份/阵营
+		 *
+		 * - 自己：始终知道自己的阵营（未亮将则用 getGuozhanGroup）
+		 * - 他人：只在 identity 已经被明示时才使用；未明示一律视为 unknown
+		 */
 		var getIdentity = function (player) {
-			if (player.isUnseen()) {
-				if (!player.wontYe()) {
-					return "ye";
+			// 自己始终知道自己的阵营
+			if (player == from) {
+				if (player.identity && player.identity != "unknown") {
+					return player.identity;
 				}
 				return player.getGuozhanGroup(0);
+			}
+			// 其他角色，只有在身份已被明示时 AI 才能看到
+			if (player.identity == "unknown") {
+				return "unknown";
 			}
 			return player.identity;
 		};
 		var fid = getIdentity(from);
-		if (fid == toidentity && toidentity != "ye") {
+		if (fid == toidentity && toidentity != "ye" && toidentity != "unknown") {
 			return 4 + difficulty;
 		}
-		if (from.identity == "unknown" && fid == toidentity) {
+		if (from.identity == "unknown" && fid == toidentity && toidentity != "unknown") {
 			if (from.wontYe()) {
 				return 4 + difficulty;
 			}
@@ -284,12 +295,23 @@ export class GetGuozhan extends Get {
 	 * @returns
 	 */
 	rawAttitude(from, to) {
+		/**
+		 * 仅根据“可公开信息”推断身份/阵营
+		 *
+		 * - 自己：始终知道自己的阵营（未亮将则用 getGuozhanGroup）
+		 * - 他人：只在 identity 已经被明示时才使用；未明示一律视为 unknown
+		 */
 		var getIdentity = function (player) {
-			if (player.isUnseen()) {
-				if (!player.wontYe()) {
-					return "ye";
+			// 自己始终知道自己的阵营
+			if (player == from) {
+				if (player.identity && player.identity != "unknown") {
+					return player.identity;
 				}
 				return player.getGuozhanGroup(0);
+			}
+			// 其他角色，只有在身份已被明示时 AI 才能看到
+			if (player.identity == "unknown") {
+				return "unknown";
 			}
 			return player.identity;
 		};
@@ -311,7 +333,7 @@ export class GetGuozhan extends Get {
 		if (from.isFriendOf(to)) {
 			return 5 + difficulty;
 		}
-		if (from.identity == "unknown" && fid == to.identity) {
+		if (from.identity == "unknown" && fid == tid && tid != "unknown") {
 			if (from.wontYe()) {
 				return 4 + difficulty;
 			}
