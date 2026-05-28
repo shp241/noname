@@ -1,5 +1,11 @@
 import { lib, game, ui, get, ai, _status } from "noname";
 
+const _originalRemoveSkill = lib.element.Player.prototype.removeSkill;
+const _originalAddSkill = lib.element.Player.prototype.addSkill;
+const _originalInit = lib.element.Player.prototype.init;
+const _originalReinit = lib.element.Player.prototype.reinit;
+const _originalUninit = lib.element.Player.prototype.uninit;
+
 export class PlayerGuozhan extends lib.element.Player {
 	/**
 	 * @type {string}
@@ -1274,34 +1280,36 @@ export class PlayerGuozhan extends lib.element.Player {
 	}
 
 	init(character, character2, skill, update) {
-		super.init(character, character2, skill, update);
+		_originalInit.call(this, character, character2, skill, update);
 		this.syncGuozhanSkillZones?.();
 	}
 
 	reinit(from, to, maxHp, online) {
-		super.reinit(from, to, maxHp, online);
+		_originalReinit.call(this, from, to, maxHp, online);
 		this.syncGuozhanSkillZones?.();
 	}
 
 	uninit() {
-		super.uninit();
+		_originalUninit.call(this);
 		this.resetGuozhanSkillZones();
 	}
 
 	addSkill(skill, ...args) {
-		if (Array.isArray(skill)) return super.addSkill(skill, ...args);
-		super.addSkill(skill, ...args);
+		if (Array.isArray(skill)) return _originalAddSkill.call(this, skill, ...args);
+		const result = _originalAddSkill.call(this, skill, ...args);
 		if (typeof skill === "string" && Array.isArray(this.skills) && this.skills.includes(skill)) {
 			const zone = this._guozhanPendingZone || "role";
 			if (!this.getGuozhanSkillZone(skill))
 				this._assignSkillToZone(skill, zone);
 		}
+		return result;
 	}
 
 	removeSkill(skill, ...args) {
-		if (Array.isArray(skill)) return super.removeSkill(skill, ...args);
-		super.removeSkill(skill, ...args);
+		if (Array.isArray(skill)) return _originalRemoveSkill.call(this, skill, ...args);
+		const result = _originalRemoveSkill.call(this, skill, ...args);
 		if (typeof skill === "string" && (!Array.isArray(this.skills) || !this.skills.includes(skill)))
 			this._removeSkillFromZone(skill);
+		return result;
 	}
 }
