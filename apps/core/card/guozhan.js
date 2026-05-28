@@ -981,48 +981,23 @@ game.import("card", function () {
 						}
 					}
 				},*/,
-				content() {
-					"step 0";
+				async content(event, trigger, player) {
 					if (get.mode() != "guozhan") {
-						if (player == target) {
-							target.draw(game.filterPlayer().length);
+						if (player == event.target) {
+							await event.target.draw(game.filterPlayer().length);
 						} else {
-							target.chooseDrawRecover(true);
+							await event.target.chooseDrawRecover(true);
 						}
-						event.finish();
+						return;
 					} else {
-						if (target == player) {
-							var num = targets.length - 1;
-							event.num = num;
-							var damaged = target.maxHp - target.hp;
-							if (damaged == 0) {
-								target.draw(num);
-								event.finish();
-							} else {
-								var list = [];
-								for (var i = Math.min(num, damaged); i >= 0; i--) {
-									list.push("摸" + (num - i) + "回" + i);
-								}
-								target.chooseControl(list).set("prompt", "请分配自己的摸牌数和回复量").ai = function () {
-									return 0;
-								};
+						if (event.target == player) {
+							var num = event.targets.length - 1;
+							for (var i = 0; i < num; i++) {
+								await event.target.chooseDrawRecover(true);
 							}
-						} else {
-							target.draw();
-						}
-					}
-					"step 1";
-					if (target != player) {
-						target.link(false);
-					} else if (typeof result.control == "string") {
-						var index = result.control.indexOf("回");
-						var draw = parseInt(result.control.slice(1, index));
-						var recover = parseInt(result.control.slice(index + 1));
-						if (draw) {
-							target.draw(draw);
-						}
-						if (recover) {
-							target.recover(recover);
+						} else if (event.target != player) {
+							await event.target.link(false);
+							await event.target.draw();
 						}
 					}
 				},
@@ -1074,7 +1049,7 @@ game.import("card", function () {
 						if (player.hasSkillTag("mingzhi_no")) {
 							return "选项三";
 						}
-						return Math.random() < 0.5 ? "选项一" : "选项三";
+						return Math.random() < 0.8 ? "选项一" : "选项三";
 					} else {
 						if (_status.event.getParent().nomingzhi) {
 							if (_status.event.controls.includes("选项二")) {
@@ -1082,10 +1057,7 @@ game.import("card", function () {
 							}
 							return "选项一";
 						}
-						if (player.hasSkillTag("maixie_hp") || player.hp <= 2) {
-							return "选项一";
-						}
-						return Math.random() < 0.5 ? "选项一" : "选项二";
+						return "选项一";
 					}
 				},
 				content() {
@@ -1216,11 +1188,8 @@ game.import("card", function () {
 				subtype: "equip2",
 				cardcolor: "club",
 				skills: ["huxinjing"],
-				filterTarget(card, player, target) {
-					if (get.mode() == "guozhan" && player != target) {
-						return false;
-					}
-					return target.canEquip(card, true);
+			filterTarget(card, player, target) {
+				return target.canEquip(card, true);
 				},
 				selectTarget() {
 					return get.mode() == "guozhan" ? -1 : 1;
@@ -1278,7 +1247,11 @@ game.import("card", function () {
 				},
 				enable: true,
 				selectTarget: -1,
-				modTarget: true,
+				changeTarget(player, targets) {
+					var target = targets[0];
+					game.filterPlayer(function (current) {
+						return target.inline(current);
+					}, targets);
 				content() {
 					target.damage("fire");
 				},
@@ -2256,6 +2229,9 @@ game.import("card", function () {
 			diaohulishan: {
 				charlotte: true,
 				group: "undist",
+				filterTarget(card, player, target) {
+					return target != _status.currentPhase;
+				},
 				init(player) {
 					if (player.isIn()) {
 						game.broadcastAll(function (player) {
