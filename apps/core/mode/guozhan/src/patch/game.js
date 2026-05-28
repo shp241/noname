@@ -259,11 +259,12 @@ export class GameGuozhan extends Game {
 			wu: "吴",
 			qun: "群",
 			jin: "晋",
+			han: "汉",
 			ye: "野",
 			unknown: "猜",
 		};
 		const maxPlayer = (_status.separatism ? Math.max(get.population() / 2 - 1, 1) : get.population() / 2);
-		for ( let group of ["wei", "shu", "wu", "qun", "jin"]) {
+		for ( let group of ["wei", "shu", "wu", "qun", "jin", "han"]) {
 			if (group == _status.bannedGroup?.slice(6) || get.population(group) >= maxPlayer && !game.hasPlayer(current => {
 				return get.is.jun(current) && current.identity == group;
 			})) {
@@ -293,6 +294,9 @@ export class GameGuozhan extends Game {
 					list[i] = "Key";
 					break;
 				case "jin":
+					list[i] += "朝";
+					break;
+				case "han":
 					list[i] += "朝";
 					break;
 				default:
